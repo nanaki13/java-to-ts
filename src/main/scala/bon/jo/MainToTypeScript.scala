@@ -1,12 +1,12 @@
 package bon.jo
 
-import bon.jo.ScanJar.{classToTypeScriptFile, parseArgs}
+import bon.jo.ScanJar.{apply, parseArgs}
 
 import scala.util.Success
 
 object MainToTypeScript extends App {
 
-  args match {
+  Array("--ui") match {
     case Array("--help") | Array() => println(
       """
         |options
@@ -16,8 +16,9 @@ object MainToTypeScript extends App {
         | -ts (interface | class) : generate interface or class
         |
         |""".stripMargin)
+    case Array("--ui") => JFx.main(args)
     case other@_ => parseArgs(other) match {
-      case Success(option) => classToTypeScriptFile(option)
+      case Success( option) => apply()(option)
       case _ =>
     }
   }

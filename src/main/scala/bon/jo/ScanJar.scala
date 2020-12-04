@@ -247,7 +247,7 @@ object ScanJar extends App {
 
 
 
-  def classToTypeScriptFile(implicit option: ToFileOption) = {
+  def apply()(implicit option: ToFileOption): Unit = {
     implicit val optionTypeScript: OptionTypeScript = option.optionTypeScript
     val out = Paths.get(option.outOption.dirOut).toFile
     if (!out.exists()) {
