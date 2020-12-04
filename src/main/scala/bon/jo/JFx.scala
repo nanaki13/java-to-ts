@@ -76,11 +76,8 @@ object JFx extends JFXApp {
     height = 500
     width = 500
     scene = new Scene {
-
-
       content = new VBox {
         children = ObservableBuffer(buttonJar, buttonOut, buttonLaunch,textArea
-
         )
       }
     }

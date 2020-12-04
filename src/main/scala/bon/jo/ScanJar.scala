@@ -1,6 +1,5 @@
 package bon.jo
 
-import java.beans.BeanProperty
 import java.io.{FileWriter, InputStream}
 import java.lang.reflect.{Method, Type}
 import java.nio.file.Paths
@@ -65,39 +64,76 @@ object ScanJar extends App {
 
   def classListByte(jarPath: String): Iterable[(String, Array[Byte])] = (new ZipFile(jarPath)).iterator()
 
-  class CustomCl(class_ : Iterable[(String, Array[Byte])]) extends ClassLoader(this.getClass.getClassLoader) {
+  class CustomCl(class_ : Iterable[(String, Array[Byte])]) extends ClassLoader(Thread.currentThread().getContextClassLoader) {
     val map = class_.map(e => e._1.replace(".class", "").replace("/", ".") -> e._2).toMap
 
+
     override def findClass(name: String): Class[_] = {
-      val b = map(name)
-      defineClass(name, b, 0, b.length)
+
+      val b = map.get(name)
+      b match {
+        case Some(value) => {
+          println(name)
+          noThrow(defineClass(name, value, 0, value.length),null)(e=>{
+            s"""defineClass $name throw $e"""
+          })
+        }
+        case None => null
+      }
+
+    }
+    def findClassOption(name: String): Option[Class[_]] = {
+      Option(try {
+        (findClass(name))
+      }catch {
+        case e : Throwable => {
+          e.printStackTrace()
+          null
+        }
+      })
+
     }
 
-    def classList: Iterable[Class[_]] = map.keys.map(findClass)
+    def classList: Iterable[Class[_]] = map.keys.flatMap(findClassOption)
   }
 
   def apply(jarPath: String): Iterable[Class[_]] = new CustomCl(ScanJar.classListByte(jarPath)).classList
 
 
-  case class User(@BeanProperty id: String, @BeanProperty amis: java.util.List[User])
+
 
   case class CImpl()(implicit val option: OptionTypeScript) extends COp
 
   implicit def createCimpl(implicit option: OptionTypeScript) = CImpl()
 
+  def noThrow[A](a : => A,default : => A)(msg : Throwable => String) : A = {
+    try{
+      a
+    } catch {
+      case e : Throwable => {println(msg(e));default}
+    }
+  }
   trait COp {
     implicit val option: OptionTypeScript
 
     def toTypeScriptDesc(class_ : Class[_]): TypeScriptDesc = TypeScriptDesc(class_.getSimpleName + ".ts", toTypeScript(class_))
 
-    def isBean(class_ : Class[_]): Boolean = gettersToFields(class_).nonEmpty
+    def isBean(class_ : Class[_]): Boolean = noThrow(gettersToFields(class_).nonEmpty,false)(e=>{
+      s"""is bean $class_ throw $e"""
+    })
 
 
     def getters(class_ : Class[_]): Array[Method] = class_.getMethods.filter(m => m.getName != "getClass" && m.getName.startsWith("get") || m.getName.startsWith("is"))
 
     def setters(class_ : Class[_]): Array[Method] = class_.getMethods.filter(_.getName.startsWith("set"))
 
-    def gettersToFields(class_ : Class[_]): Array[(String, Class[_], Type)] = getters(class_).filter(e => class_.getDeclaredFields.map(_.getName).contains(e.fildName)).map(g => (g.fildName, class_.getDeclaredField(g.fildName).getType, class_.getDeclaredField(g.fildName).getGenericType))
+    def gettersToFields(class_ : Class[_]): Array[(String, Class[_], Type)] = getters(class_).filter(e =>
+      noThrow(class_.getDeclaredFields.map(_.getName).contains(e.fildName),false)
+      (e=>{
+        s"""gettersToFields $class_ throw $e"""
+      })
+
+    ).map(g => (g.fildName, class_.getDeclaredField(g.fildName).getType, class_.getDeclaredField(g.fildName).getGenericType))
 
     def imports(class_ : Class[_]): Set[String] = {
 
@@ -112,7 +148,7 @@ object ScanJar extends App {
             case None => s"${e._2.getSimpleName}"
           }
         }
-      ).toSet.map { e: String => s"import ${e}.ts" }
+      ).toSet.map { e: String => s"import {${e}} from './${e}'" }
     }
 
     def toTypeScript(class_ : Class[_]): String = {
@@ -314,7 +350,6 @@ object ScanJar extends App {
   }
 
 
+  apply()(ToFileOption("""D:\Donnees\Maven\repository\fr\pe\rcat\exposition\ex067\ex067-marches-rest\1.7.0-191\ex067-marches-rest-1.7.0-191.jar"""))
 
 }
-
-
