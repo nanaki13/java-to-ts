@@ -5,11 +5,13 @@ import scalafx.collections.ObservableBuffer
 import scalafx.application.JFXApp
 import scalafx.application.JFXApp.Stage
 import scalafx.scene.Scene
-import scalafx.scene.control.{Button, TextField}
-import scalafx.scene.layout.HBox
+import scalafx.scene.control.{Button, TextArea, TextField}
+import scalafx.scene.layout.{HBox, VBox}
 import scalafx.stage.{DirectoryChooser, FileChooser}
 import javafx.scene.input.MouseEvent
 import scalafx.event.EventHandler
+
+import scala.util.{Failure, Success, Try}
 
 object JFx extends JFXApp {
 
@@ -48,7 +50,12 @@ object JFx extends JFXApp {
       case None =>
     }
   }
-  val launch : javafx.event.EventHandler[MouseEvent] = { _ => ScanJar()}
+  val launch : javafx.event.EventHandler[MouseEvent] = { _ =>
+
+    Try(ScanJar()) match {
+      case Failure(exception) => textArea.text.value  = s"${textArea.text.value}\n${exception}:${Option(exception.getMessage).getOrElse("Pas de message")}${Option(exception.getCause).map(_.getMessage).getOrElse("")}"
+      case Success(_) => textArea.text.value = s"${textArea.text.value}\nOk"
+    } }
   private val buttonJar = new Button {
     text = "Jar"
     onMouseClicked = jarSource
@@ -61,13 +68,18 @@ object JFx extends JFXApp {
     text = "Launch"
     onMouseClicked = launch
   }
+  private val textArea = new TextArea
 
 
   stage = new JFXApp.PrimaryStage {
     title.value = "Choisit un jar"
+    height = 500
+    width = 500
     scene = new Scene {
-      content = new HBox {
-        children = ObservableBuffer(buttonJar, buttonOut, buttonLaunch
+
+
+      content = new VBox {
+        children = ObservableBuffer(buttonJar, buttonOut, buttonLaunch,textArea
 
         )
       }
