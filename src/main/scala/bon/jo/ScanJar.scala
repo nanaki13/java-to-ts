@@ -1,6 +1,7 @@
 package bon.jo
 
 import java.io.{FileWriter, InputStream}
+import java.lang
 import java.lang.reflect.{Method, Type}
 import java.nio.file.Paths
 import java.util.zip.{ZipEntry, ZipFile}
@@ -74,7 +75,7 @@ object ScanJar extends App {
       b match {
         case Some(value) => {
           println(name)
-          noThrow(defineClass(name, value, 0, value.length),null)(e=>{
+          noThrow(defineClass(name, value, 0, value.length), null)(e => {
             s"""defineClass $name throw $e"""
           })
         }
@@ -82,11 +83,12 @@ object ScanJar extends App {
       }
 
     }
+
     def findClassOption(name: String): Option[Class[_]] = {
       Option(try {
         (findClass(name))
-      }catch {
-        case e : Throwable => {
+      } catch {
+        case e: Throwable => {
           e.printStackTrace()
           null
         }
@@ -100,25 +102,26 @@ object ScanJar extends App {
   def apply(jarPath: String): Iterable[Class[_]] = new CustomCl(ScanJar.classListByte(jarPath)).classList
 
 
-
-
   case class CImpl()(implicit val option: OptionTypeScript) extends COp
 
   implicit def createCimpl(implicit option: OptionTypeScript) = CImpl()
 
-  def noThrow[A](a : => A,default : => A)(msg : Throwable => String) : A = {
-    try{
+  def noThrow[A](a: => A, default: => A)(msg: Throwable => String): A = {
+    try {
       a
     } catch {
-      case e : Throwable => {println(msg(e));default}
+      case e: Throwable => {
+        println(msg(e)); default
+      }
     }
   }
+
   trait COp {
     implicit val option: OptionTypeScript
 
     def toTypeScriptDesc(class_ : Class[_]): TypeScriptDesc = TypeScriptDesc(class_.getSimpleName + ".ts", toTypeScript(class_))
 
-    def isBean(class_ : Class[_]): Boolean = noThrow(gettersToFields(class_).nonEmpty,false)(e=>{
+    def isBean(class_ : Class[_]): Boolean = noThrow(gettersToFields(class_).nonEmpty, false)(e => {
       s"""is bean $class_ throw $e"""
     })
 
@@ -128,28 +131,34 @@ object ScanJar extends App {
     def setters(class_ : Class[_]): Array[Method] = class_.getMethods.filter(_.getName.startsWith("set"))
 
     def gettersToFields(class_ : Class[_]): Array[(String, Class[_], Type)] = getters(class_).filter(e =>
-      noThrow(class_.getDeclaredFields.map(_.getName).contains(e.fildName),false)
-      (e=>{
+      noThrow(class_.getDeclaredFields.map(_.getName).contains(e.fildName), false)
+      (e => {
         s"""gettersToFields $class_ throw $e"""
       })
 
     ).map(g => (g.fildName, class_.getDeclaredField(g.fildName).getType, class_.getDeclaredField(g.fildName).getGenericType))
 
+    val primitif = Set("string", "number", "boolean", "any")
+
+    def nonePrimitif(s: String): Boolean = {
+      !primitif.contains(s)
+    }
+
     def imports(class_ : Class[_]): Set[String] = {
 
 
-      gettersToFields(class_).filter(a => a._2 != class_ && !JavaClass.parseType(a._3).contains(class_.getSimpleName)).filter(el => !JavaClass.props.contains(el._2)).map(e =>
+      gettersToFields(class_).filter(a => a._2 != class_
+        && !JavaClass.parseType(a._3).contains(class_.getSimpleName))
+        .filter(el => !JavaClass.classToProp.contains(el._2)).map(e =>
 
-        JavaClass.parseType(e._3) match {
-
-          case Some(a) => a
-          case None => JavaClass.colls.get(e._2) match {
-            case Some(_) => s"${JavaClass.parseType(e._3).getOrElse(s"erreur avec : ${e}")}"
-            case None => s"${e._2.getSimpleName}"
-          }
+        JavaClass.colls.get(e._2) match {
+          case Some(_) => JavaClass.parseType(e._3).filter(nonePrimitif)
+          case _ => Option(s"${e._2.getSimpleName}")
         }
-      ).toSet.map { e: String => s"import {${e}} from './${e}'" }
-    }
+      ).toList.flatMap { e =>
+        e.map(v => s"import {${v}} from './${v}'")
+      }
+    }.toSet
 
     def toTypeScript(class_ : Class[_]): String = {
       s"""
@@ -203,16 +212,25 @@ object ScanJar extends App {
 
     import java.{lang => jl, util => ju}
 
-    val string: Class[jl.String] = classOf
-    val long: Class[jl.Long] = classOf
-    val int: Class[jl.Integer] = classOf
-    val boolean: Class[jl.Boolean] = classOf
-    val date: Class[ju.Date] = classOf
-    val float: Class[jl.Float] = classOf
-    val double: Class[jl.Double] = classOf
-    val list: Class[ju.List[_]] = classOf
-    val arrayList: Class[ju.ArrayList[_]] = classOf
-    val linkedList: Class[ju.LinkedList[_]] = classOf
+    def string: Class[jl.String] = classOf
+    def long: Class[jl.Long] = classOf
+    def int: Class[jl.Integer] = classOf
+    def short: Class[jl.Short] = classOf
+    def byte: Class[jl.Byte] = classOf
+    def boolean: Class[jl.Boolean] = classOf
+    def date: Class[ju.Date] = classOf
+    def float: Class[jl.Float] = classOf
+    def double: Class[jl.Double] = classOf
+    def list: Class[ju.List[_]] = classOf
+    def arrayList: Class[ju.ArrayList[_]] = classOf
+    def linkedList: Class[ju.LinkedList[_]] = classOf
+    def intP: Class[Integer] = jl.Integer.TYPE
+    def longP: Class[lang.Long] = jl.Long.TYPE
+    def floatP: Class[lang.Float] = jl.Float.TYPE
+    def doubleP: Class[lang.Double] = jl.Double.TYPE
+    def booleanP: Class[lang.Boolean] = jl.Boolean.TYPE
+    def byteP: Class[lang.Byte] = jl.Byte.TYPE
+    def shortP: Class[lang.Short] = jl.Short.TYPE
 
     case class Prop(typeScript: String)
 
@@ -221,29 +239,65 @@ object ScanJar extends App {
     private def p = Prop(_)
 
     private val genParse = """.*<(.*)>""".r
-    private val numberP = p("number")
-    val props: Map[Class[_], Prop] = Map(
-      string -> p("string"),
-      boolean -> p("boolean"),
-      date -> p("Date"),
-      float -> numberP,
-      double -> numberP,
-      long -> numberP,
-      int -> numberP,
+    private val pNumber = p("number")
+    private val pString = p("string")
+    private val pBoolean = p("boolean")
+    private val pDate = p("Date")
+    val classToProp: Map[Class[_], Prop] = Map(
+      string -> pString,
+      boolean -> pBoolean,
+      date -> pDate,
+      float -> pNumber,
+      double -> pNumber,
+      long -> pNumber,
+      int -> pNumber,
+      short -> pNumber,
+      byte -> pNumber,
+      intP -> pNumber,
+      longP -> pNumber,
+      floatP -> pNumber,
+      doubleP -> pNumber,
+      booleanP -> pBoolean,
+      byteP -> pBoolean,
+      shortP -> pBoolean
+    )
+    val stringToProp: Map[String, Prop] = Map(
+      "long" -> pNumber,
+      "int" -> pNumber,
+      "integer" -> pNumber,
+      "float" -> pNumber,
+      "double" -> pNumber,
+      "boolean" -> pBoolean,
+      "string" -> pString,
+      "Long" -> pNumber,
+      "Integer" -> pNumber,
+      "Float" -> pNumber,
+      "Double" -> pNumber,
+      "Boolean" -> pBoolean,
+      "String" -> pString,
+      "date" -> pDate,
+      "LocalDate" -> pDate,
+      "LocalDateTime" -> pDate,
+      "LocalTime" -> pDate,
     )
 
     private def pt = PropColl(_)
 
     private def parseColType(type_ : Type): Option[String] = {
       type_.getTypeName match {
-        case genParse(colElmType) => Option(s"${colElmType.split("\\.").last.split("\\$").last}[]")
+        case genParse(colElmType) => Option(s"${checkIfLgType(colElmType)}[]")
         case _ => None
       }
     }
 
+    def checkIfLgType(colElmType: String): String = {
+      val simpleName = colElmType.split("\\.").last.split("\\$").last
+      stringToProp.getOrElse(simpleName, p(simpleName)).typeScript
+    }
+
     def parseType(type_ : Type): Option[String] = {
       type_.getTypeName match {
-        case genParse(colElmType) => Option(s"${colElmType.split("\\.").last.split("\\$").last}")
+        case genParse(colElmType) => Option(checkIfLgType(colElmType))
         case _ => None
       }
     }
@@ -261,7 +315,7 @@ object ScanJar extends App {
   implicit class StrToTST(str: (String, Class[_], Type)) {
 
     def tsType: String = {
-      JavaClass.props.get(str._2) match {
+      JavaClass.classToProp.get(str._2) match {
         case Some(value) => value.typeScript
         case None => JavaClass.colls.get(str._2) match {
           case Some(value) => value.typeScript(str._3) match {
@@ -277,10 +331,6 @@ object ScanJar extends App {
   implicit class TypeScript(tuple2: (String, Class[_], Type)) {
     def toTypeScript = s""" ${tuple2._1} : ${tuple2.tsType}"""
   }
-
-
-
-
 
 
   def apply()(implicit option: ToFileOption): Unit = {
@@ -311,10 +361,10 @@ object ScanJar extends App {
     }
   }
 
-  case class ToFileOption(jar : String,outOption: OutOption = OutOption(), optionTypeScript: OptionTypeScript = OptionTypeScript())
+  case class ToFileOption(jar: String, outOption: OutOption = OutOption(), optionTypeScript: OptionTypeScript = OptionTypeScript())
 
   object ToFileOption {
-    def unapply(arg: Array[String]): Option[( String,OutOption, OptionTypeScript)] = {
+    def unapply(arg: Array[String]): Option[(String, OutOption, OptionTypeScript)] = {
       var optionName: List[String] = List()
       var optionValue: List[String] = List()
       arg.foreach(e => {
@@ -325,7 +375,7 @@ object ScanJar extends App {
         }
       })
       val optionMap = (optionName zip optionValue).toMap
-      Option((optionMap getOrElse("-j", throw new IllegalArgumentException("option -j non trouvé")),OutOption(optionMap getOrElse("-o", ".")), OptionTypeScript(optionMap getOrElse("-ts", "interface"))))
+      Option((optionMap getOrElse("-j", throw new IllegalArgumentException("option -j non trouvé")), OutOption(optionMap getOrElse("-o", ".")), OptionTypeScript(optionMap getOrElse("-ts", "interface"))))
 
     }
   }
@@ -342,14 +392,15 @@ object ScanJar extends App {
     override def toString: String = "interface"
   }
 
-  def parseArgs(args : Array[String]) = {
-    Try( args match {
-      case  ToFileOption(jar,outOption,optionTypeScript) => ToFileOption(jar,outOption,optionTypeScript)
+  def parseArgs(args: Array[String]) = {
+    Try(args match {
+      case ToFileOption(jar, outOption, optionTypeScript) => ToFileOption(jar, outOption, optionTypeScript)
       case _ => throw new IllegalArgumentException(s"cant parse ${args.toList}")
     })
   }
 
+  implicit val option: OptionTypeScript = OptionTypeScript()
 
-  apply()(ToFileOption("""D:\Donnees\Maven\repository\fr\pe\rcat\exposition\ex067\ex067-marches-rest\1.7.0-191\ex067-marches-rest-1.7.0-191.jar"""))
+  println(classOf[UserJava].toTypeScript)
 
 }

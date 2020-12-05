@@ -6,7 +6,18 @@ public class UserJava {
 
     private String id;
     private List<UserJava> users;
+    private List<Long> points;
     private UserJava pere;
+    private int truc;
+
+    public int getTruc() {
+        return truc;
+    }
+
+    public void setTruc(int truc) {
+        this.truc = truc;
+    }
+
     public String getId() {
         return id;
     }
@@ -29,5 +40,13 @@ public class UserJava {
 
     public void setPere(UserJava pere) {
         this.pere = pere;
+    }
+
+    public List<Long> getPoints() {
+        return points;
+    }
+
+    public void setPoints(List<Long> points) {
+        this.points = points;
     }
 }
