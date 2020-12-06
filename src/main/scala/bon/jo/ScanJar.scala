@@ -8,7 +8,7 @@ import java.util.zip.{ZipEntry, ZipFile}
 
 import bon.jo.ScanJar.OptionTypeScript
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.util.{Failure, Success, Try}
 
 object ScanJar extends App {
@@ -332,21 +332,27 @@ object ScanJar extends App {
     def toTypeScript = s""" ${tuple2._1} : ${tuple2.tsType}"""
   }
 
+  type c = Class[_]
 
-  def apply()(implicit option: ToFileOption): Unit = {
+  def apply()(implicit option: ToFileOption): List[c] = {
     implicit val optionTypeScript: OptionTypeScript = option.optionTypeScript
     val out = Paths.get(option.outOption.dirOut).toFile
+    val outClass = ListBuffer[c]()
     if (!out.exists()) {
       out.mkdirs()
     }
     ScanJar.apply(option.jar)
       .filter(_.isBean)
-      .map(c => (c.toTypeScriptDesc))
+      .map(c => {
+        outClass += c
+        c.toTypeScriptDesc
+      })
       .foreach(desc => {
         val f = new FileWriter(Paths.get(option.outOption.dirOut, desc.name).toFile)
         Try(f.write(desc.content))
         f.close()
       })
+    outClass.toList
   }
 
   case class OptionTypeScript(typeScriptClassType: TypeScriptClassType = Interf)
