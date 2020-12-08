@@ -2,25 +2,35 @@ package bon.jo
 
 import java.io.File
 
+import scalafx.Includes._
 import bon.jo.ScanJar.{C, OptionTypeScript, ToFileOption, c, createCimpl}
 import bon.jo.SerPers.ImplicitDef.create
 import bon.jo.SerPers.{IdString, SerObject}
+import javafx.beans.value.ObservableValue
 import javafx.scene.input.MouseEvent
+import scalafx.Includes.jfxReadOnlyDoubleProperty2sfx
 import scalafx.application.JFXApp
+import scalafx.beans.property.{Property, StringProperty}
+import scalafx.beans.value.ObservableValue
 import scalafx.collections.ObservableBuffer
 import scalafx.event.EventType
 import scalafx.geometry.{Insets, Orientation}
 import scalafx.scene.{Node, Scene}
 import scalafx.scene.control.{Button, Label, ScrollPane, SplitPane, TextArea, TextField, TreeCell, TreeItem, TreeView}
-import scalafx.scene.layout.{HBox, Pane, VBox}
+import scalafx.scene.layout.{BorderPane, HBox, Pane, VBox}
+import scalafx.scene.paint.Color
 import scalafx.stage.{DirectoryChooser, FileChooser}
 
+import scala.collection.mutable.ListBuffer
 import scala.util.{Failure, Success, Try}
-
+import scala.sys.process._
 object JFx extends JFXApp {
 
 
-  case class Memo(lastDir: Option[String] = None, lastJat: Option[String] = None)
+  case class Memo(lastDir: Option[String] = None
+                  , lastJat: Option[String] = None
+
+                 )
 
   implicit val idMemo: IdString[Memo] = _ => "memo"
 
@@ -31,6 +41,7 @@ object JFx extends JFXApp {
     }
   }
   implicit var options: ToFileOption = ToFileOption("")
+  var pomFile = ""
   implicit val optionTypeScript: OptionTypeScript = options.optionTypeScript
 
   def jarSource: javafx.event.EventHandler[MouseEvent] = { _ =>
@@ -60,6 +71,56 @@ object JFx extends JFXApp {
     }
   }
 
+
+
+  def gitCloneTarget : javafx.event.EventHandler[MouseEvent] = { _ =>
+      textFieldRepoGit.getText
+
+    `git clone`(textArea.getText,new File("app-git-clone"))
+  }
+
+  def log: ProcessLogger = ProcessLogger(textArea.appendText _ )
+
+  def pomTarget: javafx.event.EventHandler[MouseEvent] = { _ =>
+    val filter = new FileChooser.ExtensionFilter(
+      "pom File", "*.xml"
+    )
+    Option((new FileChooser {
+      title = "Choisit un pom"
+      extensionFilters.add(filter)
+//      initialDirectory = memo match {
+//        case Memo(_,_, Some(pom)) => (new File(pom)).getParentFile
+//        case _ => null
+//      }
+
+    }).showOpenDialog(stage)) match {
+      case Some(value) => {
+        pomFile = value.getAbsolutePath
+        textFieldPom.text = pomFile
+
+
+        `mvn clean package` (value)
+
+//        memo = memo.copy(lastJat = v.map(_.getAbsolutePath))
+//        memo.save()
+//        options = {
+//          textFieldJar.text = value.getAbsolutePath
+//          options.copy(value.getAbsolutePath)
+//        }
+
+      }
+
+
+      case None =>
+    }
+  }
+
+  def `mvn clean package`(value : File): Int =  (new java.lang.ProcessBuilder())
+    .directory(value.getParentFile).command( "mvn.cmd","clean","package") ! log
+  def `git clone`(repo : String, value : File): Int = {
+    value.mkdirs()
+    (new java.lang.ProcessBuilder()).directory(value).command("git", "clone", repo) ! log
+  }
   def outTarget: javafx.event.EventHandler[MouseEvent] = { _ =>
     Option((new DirectoryChooser {
       title = "Choisit une sortie"
@@ -104,6 +165,10 @@ object JFx extends JFXApp {
     b.editable = false
     b
   }
+  private val textFieldRepoGit = tf("") { b =>
+    b.editable = false
+    b
+  }
   private val buttonJar = bt("Jar") { b =>
     b.onMouseClicked = jarSource
     b
@@ -116,19 +181,25 @@ object JFx extends JFXApp {
     b.onMouseClicked = outTarget
     b
   }
+  private val textFieldPom = tf("") { b =>
+    b.editable = false
+    b
+  }
+  private val buttonPom = bt("pom") { b =>
+    b.onMouseClicked = pomTarget
+    b
+  }
+  private val buttonGit= bt("clone") { b =>
+    b.onMouseClicked = pomTarget
+    b
+  }
   private val buttonLaunch = bt("Launch") { b =>
     b.onMouseClicked = launch
     b
   }
 
-  def resize: javafx.event.EventHandler[MouseEvent] = { _ =>
 
-  }
 
-  private val buttonResize = bt("Resize") { b =>
-    b.onMouseClicked = resize
-    b
-  }
   private val textArea = new TextArea {
     margin = Insets(5)
   }
@@ -182,7 +253,7 @@ object JFx extends JFXApp {
   classView.onEditStart = _ => println("Yo")
 
   private def view(valuep: List[ScanJar.c]): Unit = {
-    val ch = valuep.map(View).map(_ ())
+    val ch = valuep.sortWith((a,b)=>a.getName < b.getName).map(View).map(_ ())
     rNode.children = ch
     rNode.setExpanded(true)
   }
@@ -227,7 +298,7 @@ object JFx extends JFXApp {
       margin = marge
     }
   }
-  def sp(textArea: Node, classView: Node): Node = {
+  def sp(textArea: Node, classView: Node): SplitPane = {
     val ct = new SplitPane {
       orientation = Orientation.Horizontal
       items.addAll(textArea, classView)
@@ -236,26 +307,59 @@ object JFx extends JFXApp {
 
     ct
   }
-
+  private val filterClassInput = new TextField
+  private val bottomp = sp(vb(filterClassInput, classView),textArea)
   private val marge: Insets = Insets(5)
+  private val centerP =  vb(
+
+
+    hb(label("pom : "), textFieldPom, buttonPom),
+    hb(label("repo : "), textFieldRepoGit, buttonGit),
+    hb(label("jar : "), textFieldJar, buttonJar)
+    ,
+    hb(label("out : "), textFieldOut, buttonOut)
+
+    , vb(buttonLaunch)
+  )
+  private val bp  = new BorderPane{
+    center = centerP
+    bottom = bottomp
+  }
   stage = new JFXApp.PrimaryStage {
     title.value = "Choisit un jar"
+    height = 500
     scene = new Scene {
-
-
-      content =   new ScrollPane{vb(
-          buttonResize,
-          hb(label("jar : "), textFieldJar, buttonJar)
-          ,
-          hb(label("out : "), textFieldOut, buttonOut)
-          , vb(buttonLaunch, sp(textArea, classView))
-        )}
-       
-
+      fill =  Color.AliceBlue
+      content =  bp
     }
 
   }
 
-  restoreMemo()
+
+  val removed = ListBuffer[TreeItem[View]]()
+
+  def ch :Unit= {
+    classView.getRoot.getChildren.toList.foreach(v => {
+      if(!v.getValue.c.getName.contains(filterClassInput.text.getValue)){
+        removed += v
+        classView.getRoot.getChildren.remove(v)
+      }
+    })
+    removed.toList.foreach(v=>{
+      if(v.getValue.c.getName.contains(filterClassInput.text.getValue)){
+        removed -= v
+        classView.getRoot.getChildren.add(v)
+      }
+    })
+    classView.getRoot.getChildren.sortInPlaceWith((a,b)=>{
+      a.getValue.c.getName < b.getValue.c.getName
+    })
+  }
+
+  filterClassInput.text.onChange(ch)
   stage.sizeToScene()
+  bottomp.prefWidthProperty() <== stage.scene.value.widthProperty()
+  bottomp.prefHeightProperty() <== stage.scene.value.heightProperty() - centerP.heightProperty() - 10
+  restoreMemo()
+
 }
