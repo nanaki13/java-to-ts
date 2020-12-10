@@ -161,13 +161,23 @@ object ScanJar extends App {
     }.toSet
 
     def toTypeScript(class_ : Class[_]): String = {
-      s"""
-         |${imports(class_).mkString(";\n")}
-         |export ${option.typeScriptClassType} ${class_.getSimpleName}{
-         |    ${gettersToFields(class_).toList.map(_.toTypeScript).mkString(";\n    ")};
-         |}
-         |
-         |""".stripMargin
+      if(class_.isEnum){
+        s"""
+           |export enum ${class_.getSimpleName}{
+           |    ${class_.getEnumConstants.map(en => s"$en='$en'").mkString(",\n    ")}
+           |}
+           |
+           |""".stripMargin
+      }else{
+        s"""
+           |${imports(class_).mkString(";\n")}
+           |export ${option.typeScriptClassType} ${class_.getSimpleName}{
+           |    ${gettersToFields(class_).toList.map(_.toTypeScript).mkString(";\n    ")};
+           |}
+           |
+           |""".stripMargin
+      }
+
     }
 
   }
@@ -322,7 +332,9 @@ object ScanJar extends App {
             case Some(value) => value
             case None => s"erreur parsing col type ${str._2} type ! ${str._3}"
           }
-          case _ => s"${str._2.getSimpleName}"
+          case _ => {
+            s"${str._2.getSimpleName}"
+          }
         }
       }
     }
@@ -408,5 +420,6 @@ object ScanJar extends App {
   implicit val option: OptionTypeScript = OptionTypeScript()
 
   println(classOf[UserJava].toTypeScript)
+  println(classOf[Sex].toTypeScript)
 
 }

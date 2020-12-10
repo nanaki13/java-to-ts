@@ -6,12 +6,14 @@ import java.nio.file.Path
 import bon.jo.ScanJar.{C, OptionTypeScript, ToFileOption, c, createCimpl}
 import bon.jo.SerPers.ImplicitDef.create
 import bon.jo.SerPers.{IdString, SerObject}
+import javafx.beans.value.{ChangeListener, ObservableValue}
+import javafx.event.Event
 import javafx.scene.input.MouseEvent
 import scalafx.Includes.{jfxReadOnlyDoubleProperty2sfx, _}
 import scalafx.application.{JFXApp, Platform}
 import scalafx.collections.ObservableBuffer
 import scalafx.geometry.{Insets, Orientation}
-import scalafx.scene.control.{Button, Label, SplitPane, TextArea, TextField, TreeCell, TreeItem, TreeView}
+import scalafx.scene.control.{Button, Label, MultipleSelectionModel, SplitPane, TextArea, TextField, TreeCell, TreeItem, TreeView}
 import scalafx.scene.layout.{BorderPane, HBox, VBox}
 import scalafx.scene.paint.Color
 import scalafx.scene.{Node, Scene}
@@ -91,7 +93,7 @@ object JFx extends JFXApp {
   def eventDoLater(f: => Unit) : javafx.event.EventHandler[MouseEvent] = { _ =>
     doLater(f)
   }
-  def event(f: => Unit) : javafx.event.EventHandler[MouseEvent] = { _ => f}
+  def event[A <: Event](f: => Unit) : javafx.event.EventHandler[A] = { _ => f}
   def gitCloneTarget: javafx.event.EventHandler[MouseEvent] = event{
       val rrot = new File("app-git-clone")
     rrot.mkdirs()
@@ -116,7 +118,7 @@ object JFx extends JFXApp {
 
   def log: ProcessLogger = ProcessLogger(appenWithEndLine _)
 
-  private def pomTarget = event{
+  private def pomTarget[A <: Event] = event[A]{
     val filter = new FileChooser.ExtensionFilter(
       "pom File", "*.xml"
     )
@@ -130,7 +132,8 @@ object JFx extends JFXApp {
         pomFile = value.getAbsolutePath
         textFieldPom.text = pomFile
         `mvn clean package`(value)
-        value.getParentFile.toPath.resolve("target").toFile.listFiles().filter(_.getName.endsWith(".jar")).foreach(jarSouce_=)
+        value.getParentFile.toPath.resolve("target").toFile.listFiles().filter(_.getName.endsWith(".jar"))
+          .foreach(jarSouce_=)
       }
       case None =>
     }
@@ -265,18 +268,15 @@ object JFx extends JFXApp {
 
       }
     })
-    cell.onMouseClicked = _ => {
-      if (!cell.isEmpty) {
-        val v: View = cell.treeItem.value.getValue
-        Option(v.c).foreach(cN => {
-          println(cN)
-          textArea.text = cN.toTypeScript
-        })
-      }
-    }
+
     cell
   }
-  classView.onEditStart = _ => println("Yo")
+
+  classView.selectionModel.value.selectedItemProperty().onChange((_,_,new_ ) =>{
+    Option(new_).map(_.getValue.c).foreach(cN => {
+      textArea.text = cN.toTypeScript
+    })
+  } )
 
   private def view(valuep: List[ScanJar.c]): Unit = {
     val ch = valuep.sortWith((a, b) => a.getName < b.getName).map(View).map(_ ())

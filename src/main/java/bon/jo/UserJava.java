@@ -8,6 +8,16 @@ public class UserJava {
     private List<UserJava> users;
     private List<Long> points;
     private UserJava pere;
+    private Sex sex;
+
+    public Sex getSex() {
+        return sex;
+    }
+
+    public void setSex(Sex sex) {
+        this.sex = sex;
+    }
+
     private int truc;
 
     public int getTruc() {
