@@ -6,10 +6,8 @@ import java.lang.reflect.{Method, Type}
 import java.nio.file.Paths
 import java.util.zip.{ZipEntry, ZipFile}
 
-import bon.jo.ScanJar.OptionTypeScript
-
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 object ScanJar extends App {
 

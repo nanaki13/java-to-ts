@@ -1,6 +1,6 @@
 package bon.jo
 
-import java.io.{BufferedInputStream, ByteArrayInputStream, ByteArrayOutputStream, FileInputStream, FileOutputStream, InputStream, ObjectInputStream, ObjectOutputStream}
+import java.io._
 
 import scala.util.{Failure, Success, Try}
 
