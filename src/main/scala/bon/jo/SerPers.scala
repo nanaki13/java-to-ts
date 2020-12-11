@@ -4,21 +4,47 @@ import java.io._
 
 import scala.util.{Failure, Success, Try}
 
+
+trait SerPers[A] {
+  def save(e: A): Unit
+
+  def restore(e: A): A
+}
+/**
+ * Allow, by importing implicit member of this class to do [[SerPers.SerPersObject.save]]
+ * and  [[SerPers.SerPersObject.restore]] on any object, by default, the persistance is done by serialization
+ * but can be overloaded.
+ */
 object SerPers {
 
-  trait SerPers[A] {
-    def save(e: A): Unit
 
-    def restore(e: A): A
-  }
-
+  /**
+   *
+   * @tparam A
+   */
   trait SerPersObject[A] {
+    /**
+     * save the object
+     */
     def save(): Unit
 
+    /**
+     * restore the object
+     * @return
+     */
     def restore(): A
   }
 
+  /**
+   * Identify an object with a [[scala.Predef.String]]
+   * @tparam A
+   */
   trait IdString[A] {
+    /**
+     *
+     * @param a : the object to identify
+     * @return the id [[scala.Predef.String]]
+     */
     def read(a: A): String
   }
 

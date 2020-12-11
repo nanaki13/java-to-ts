@@ -16,7 +16,7 @@ object MainToTypeScript extends App {
         | -ts (interface | class) : generate interface or class
         |
         |""".stripMargin)
-    case Array("--ui") => JFx.main(args)
+    case Array("--ui") => Main.main(args)
     case other@_ => parseArgs(other) match {
       case Success( option) => apply()(option)
       case _ =>

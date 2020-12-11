@@ -13,7 +13,7 @@ import scala.sys.process._
 import scala.util.{Failure, Success, Try}
 
 trait JfxEvent {
-  self: JFx =>
+  self: JFxDef =>
 
 
   def stage: Stage
@@ -75,6 +75,7 @@ trait JfxEvent {
   }
 
   protected def gitCloneTarget: javafx.event.EventHandler[MouseEvent] = event {
+    buttonGit.text = "Running..."
     val rrot = new File("app-git-clone")
     rrot.mkdirs()
     val fileGitOption = textFieldRepoGit.getText match {
@@ -84,9 +85,14 @@ trait JfxEvent {
 
 
     fileGitOption.foreach(p => {
-      `git cloneOrPull`(textFieldRepoGit.getText, rrot, p)
-      `mvn clean package`(p.resolve("pom.xml").toFile)
-      p.resolve("target").toFile.listFiles().filter(_.getName.endsWith(".jar")).foreach(jarSouce_=)
+      doLater{
+        `git cloneOrPull`(textFieldRepoGit.getText, rrot, p)
+        `mvn clean package`(p.resolve("pom.xml").toFile)
+        println(p.resolve("target").toFile.listFiles().toList)
+        p.resolve("target").toFile.listFiles().toList.filter(_.getName.endsWith(".jar")).foreach(jarSouce_=)
+        buttonGit.text = "clone"
+      }
+
     })
 
   }
@@ -112,12 +118,12 @@ trait JfxEvent {
     }
   }
 
-  protected def `mvn clean package`(value: File): Unit = doLater {
+  protected def `mvn clean package`(value: File): Unit =  {
     (new java.lang.ProcessBuilder())
       .directory(value.getParentFile).command("mvn.cmd", "package") ! log
   }
 
-  protected def `git cloneOrPull`(repo: String, value: File, repoPath: Path): Unit = doLater {
+  protected def `git cloneOrPull`(repo: String, value: File, repoPath: Path): Unit =  {
     if (!repoPath.toFile.exists()) {
       (new java.lang.ProcessBuilder()).directory(value).command("git", "clone", repo) ! log
     }
