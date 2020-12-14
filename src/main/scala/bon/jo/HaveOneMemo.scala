@@ -11,7 +11,10 @@ trait HaveOneMemo {
   var memo: Memo = {
     Try(Memo().restore()) match {
       case Failure(exception) => Memo()
-      case Success(value) => value
+      case Success(value) => value match {
+        case Some(value) => value
+        case None => Memo()
+      }
     }
   }
 }

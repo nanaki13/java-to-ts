@@ -1,6 +1,7 @@
 package bon.jo
 
 import java.io._
+import java.nio.file.Paths
 
 import scala.util.{Failure, Success, Try}
 
@@ -8,7 +9,7 @@ import scala.util.{Failure, Success, Try}
 trait SerPers[A] {
   def save(e: A): Unit
 
-  def restore(e: A): A
+  def restore(e: A):  Option[A]
 }
 /**
  * Allow, by importing implicit member of this class to do [[SerPers.SerPersObject.save]]
@@ -20,7 +21,7 @@ object SerPers {
 
   /**
    *
-   * @tparam A
+   * @tparam A the type
    */
   trait SerPersObject[A] {
     /**
@@ -32,12 +33,12 @@ object SerPers {
      * restore the object
      * @return
      */
-    def restore(): A
+    def restore(): Option[A]
   }
 
   /**
    * Identify an object with a [[scala.Predef.String]]
-   * @tparam A
+   * @tparam A the type
    */
   trait IdString[A] {
     /**
@@ -53,7 +54,7 @@ object SerPers {
 
     override def save(): Unit = implicitly[i].save(a)
 
-    override def restore(): A = implicitly[i].restore(a)
+    override def restore():  Option[A] = implicitly[i].restore(a)
   }
 
   object ImplicitDef{
@@ -85,23 +86,26 @@ object SerPers {
         _ =>
           Try(fileOut.write(ouIn.toByteArray))
       } match {
-        case _ => {
+        case _ =>
           outp.close()
           fileOut.close()
-        }
       }
     }
 
-    override def restore(e: A): A = {
-      val out = in(filteInt(e))
-      val tr =  Try(out.readObject())
-      out.close()
-      tr match {
-        case Failure(exception) => {
-          throw exception
+    override def restore(e: A):  Option[A] = {
+      if(Paths.get(fileid(e)).toFile.exists()){
+        val out = in(filteInt(e))
+        val tr =  Try(out.readObject())
+        out.close()
+        tr match {
+          case Failure(exception) =>
+            throw exception
+          case Success(value) => Some(value.asInstanceOf[A])
         }
-        case Success(value) =>value.asInstanceOf[A]
+      }else{
+        None
       }
+
     }
   }
 

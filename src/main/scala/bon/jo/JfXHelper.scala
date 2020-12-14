@@ -12,12 +12,12 @@ import scalafx.scene.layout.{HBox, VBox}
 trait JfXHelper {
   private val marge: Insets = Insets(5)
 
-  def doLater(f: => Unit): Unit = Platform.runLater {
+  def uiDoLater(f: => Unit): Unit = Platform.runLater {
     f
   }
 
   def eventDoLater(f: => Unit): javafx.event.EventHandler[MouseEvent] = { _ =>
-    doLater(f)
+    uiDoLater(f)
   }
 
   def event[A <: Event](f: => Unit): javafx.event.EventHandler[A] = { _ => f }
