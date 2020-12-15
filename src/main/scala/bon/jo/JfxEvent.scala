@@ -7,7 +7,7 @@ import bon.jo.SerPers.ImplicitDef.create
 import bon.jo.SerPers.SerObject
 import javafx.event.{Event, EventHandler}
 import javafx.scene.input.MouseEvent
-import scalafx.scene.control.Button
+import scalafx.scene.control.{Button, TextField}
 import scalafx.stage.{DirectoryChooser, FileChooser, Stage}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -19,7 +19,7 @@ trait JfxEvent {
   self: JFxDef =>
 
 
-  def stage: Stage
+  val stage: Stage
 
 
   def log: ProcessLogger = ProcessLogger(appendWithEndLine _)
@@ -51,7 +51,7 @@ trait JfxEvent {
       title = "Choisit un jar"
       extensionFilters.add(filter)
       initialDirectory = memo match {
-        case Memo(_, Some(jar)) => new File(jar).getParentFile
+        case Memo(_, Some(jar),_) => new File(jar).getParentFile
         case _ => null
       }
 
@@ -75,7 +75,35 @@ trait JfxEvent {
     }
 
   }
+  protected def gitCmdChoose(textField: TextField)(implicit e : MExtCmd,in : ExterneCommandes): javafx.event.EventHandler[MouseEvent] = event {
 
+    Option(new FileChooser {
+      title = "Choisit un exe ou script"
+    }.showOpenDialog(stage)) match {
+      case Some(value) =>
+        e.value = e.value.copy(git = value.getAbsolutePath )
+        textField.text = value.getAbsolutePath
+      case None =>
+    }
+
+  }
+  case class Mutable[A](var value : A)
+  type MExtCmd = Mutable[ExterneCommandes]
+
+  protected def mvnCmdChoose(textField: TextField)(implicit e : MExtCmd,in : ExterneCommandes): javafx.event.EventHandler[MouseEvent] = event {
+    {
+      textField.text = in.mvn
+      Option(new FileChooser {
+        title = "Choisit un exe ou script"
+      }.showOpenDialog(stage)) match {
+        case Some(value) =>
+          e.value = e.value.copy(mvn = value.getAbsolutePath )
+          textField.text = value.getAbsolutePath
+        case None =>
+      }
+
+    }
+  }
   protected def gitCloneTarget: javafx.event.EventHandler[MouseEvent] = event {
 
     val repo = textFieldRepoGit.getText
@@ -134,21 +162,21 @@ trait JfxEvent {
 
   protected def `mvn clean package`(value: File): Unit =  {
     new java.lang.ProcessBuilder()
-      .directory(value.getParentFile).command("mvn.cmd", "package") ! log
+      .directory(value.getParentFile).command(memo.externeCommandes.mvn, "package") ! log
   }
 
   protected def `git cloneOrPull`(repo: String, value: File, repoPath: Path): Unit =  {
     if (!repoPath.toFile.exists()) {
-      new java.lang.ProcessBuilder().directory(value).command("git", "clone", repo) ! log
+      new java.lang.ProcessBuilder().directory(value).command(memo.externeCommandes.git, "clone", repo) ! log
     }
-    new java.lang.ProcessBuilder().directory(value).command("git", "pull", repo) ! log
+    new java.lang.ProcessBuilder().directory(value).command(memo.externeCommandes.git, "pull", repo) ! log
   }
 
   protected def outTarget: javafx.event.EventHandler[MouseEvent] = { _ =>
     Option(new DirectoryChooser {
       title = "Choisit une sortie"
       initialDirectory = memo match {
-        case Memo(Some(dir), _) => new File(dir)
+        case Memo(Some(dir), _, _) => new File(dir)
         case _ => null
       }
 

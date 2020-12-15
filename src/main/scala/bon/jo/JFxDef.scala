@@ -3,10 +3,11 @@ package bon.jo
 
 import bon.jo.ScanJar.{C, OptionTypeScript, ToFileOption, createCimpl}
 import scalafx.Includes.{jfxReadOnlyDoubleProperty2sfx, _}
+import scalafx.application.JFXApp.PrimaryStage
 import scalafx.scene.Node
 import scalafx.scene.control._
 import scalafx.scene.layout.BorderPane
-import scalafx.stage.Stage
+import scalafx.scene.layout.Pane.sfxPane2jfx
 
 import scala.collection.mutable.ListBuffer
 
@@ -18,15 +19,17 @@ import scala.collection.mutable.ListBuffer
 
 trait JFxDef  extends HaveOneMemo with JfxComponent with JfxEvent  {
   implicit var options: ToFileOption = ToFileOption("")
+
   var pomFile = ""
   implicit val optionTypeScript: OptionTypeScript = options.optionTypeScript
-  def content : Node
+  def mainContent : BorderPane
+
   def go(): Unit
 }
 object JFxDef{
-  def apply() : JFxDef = JfxDefImpl
-  object JfxDefImpl extends JFxDef {
-    override def stage: Stage = Main.stage
+  def apply()(implicit s : PrimaryStage) : JFxDef = new JfxDefImpl
+  class JfxDefImpl(implicit s : PrimaryStage) extends JFxDef {
+    override lazy val stage: PrimaryStage =s
 
     private def changeDirOut(path: String) = {
       options = options.copy(outOption = options.outOption.copy(path))
@@ -66,11 +69,27 @@ object JFxDef{
 
       , vb(buttonLaunch)
     )
+
+
     private val _bp = new BorderPane {
       center = centerP
       bottom = bottomp
+      top = menuBar
     }
-    def content : Node = _bp
+    def optionContent(implicit e : MExtCmd,in : ExterneCommandes) : Node = {
+      val textFieldGitCmdLoc = textFieldGitCmd
+      val textFieldMvnCmdLoc = textFieldMvnCmd
+      textFieldGitCmdLoc.text = in.git
+      textFieldMvnCmdLoc.text = in.mvn
+      vb(
+        hb(label("git : "), textFieldGitCmdLoc, buttonGitCmd(textFieldGitCmdLoc)),
+        hb(label("maven : "), textFieldMvnCmdLoc, buttonMvnCmd(textFieldMvnCmdLoc)))
+
+    }
+
+
+
+    def mainContent : BorderPane = _bp
     def go(): Unit = {
       classView.cellFactory = v => {
         val cell = new TreeCell[View](new javafx.scene.control.TreeCell[View] {
@@ -121,7 +140,6 @@ object JFxDef{
       }
 
       filterClassInput.text.onChange(filterClassView)
-   //   stage.sizeToScene()
       bottomp.prefWidthProperty() <== stage.scene.value.widthProperty()
       bottomp.prefHeightProperty() <== stage.scene.value.heightProperty() - centerP.heightProperty() - 10
       classView.prefHeightProperty() <== stage.scene.value.heightProperty() - centerP.heightProperty()

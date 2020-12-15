@@ -5,15 +5,18 @@ import scalafx.scene.Scene
 import scalafx.scene.paint.Color
 
 object Main extends JFXApp {
-  private val jfx = JFxDef()
-  stage = new JFXApp.PrimaryStage {
+  implicit val stage_ : JFXApp.PrimaryStage = new JFXApp.PrimaryStage {
     title.value = "JavaToTs 0.1"
     height = 700
     width = 900
-    scene = new Scene {
-      fill = Color.AliceBlue
-      content = jfx.content
-    }
+
+  }
+  stage = stage_
+  private val jfx = JFxDef()
+
+  stage.scene = new Scene {
+    fill = Color.AliceBlue
+    content = jfx.mainContent
   }
   jfx.go()
 

@@ -22,19 +22,19 @@ trait JfXHelper {
 
   def event[A <: Event](f: => Unit): javafx.event.EventHandler[A] = { _ => f }
 
-  def label(txt: String) = new Label {
-    text = txt;
+  def label(txt: String): Label = new Label {
+    text = txt
     margin = marge
   }
 
-  def hb(chhi: Node*) = {
+  def hb(chhi: Node*): HBox = {
     new HBox {
       children = ObservableBuffer(chhi)
       margin = marge
     }
   }
 
-  def vb(chhi: Node*) = {
+  def vb(chhi: Node*): VBox = {
     new VBox() {
       children = ObservableBuffer(chhi)
       margin = marge

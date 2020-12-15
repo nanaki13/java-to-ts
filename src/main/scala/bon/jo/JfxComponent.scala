@@ -1,15 +1,21 @@
 package bon.jo
 
+import bon.jo.SerPers.ImplicitDef.create
+import bon.jo.SerPers.SerObject
+import scalafx.collections.ObservableBuffer
 import scalafx.geometry.Insets
 import scalafx.scene.control._
-
-
-
+import scalafx.scene.paint.Color
+import scalafx.scene.{Node, Scene}
+import scalafx.stage.Modality
 
 trait JfxComponent extends JfXHelper {
-  self: JfxEvent =>
+  self: JfxEvent with JFxDef =>
 
 
+  def mainContent: Node
+
+  def optionContent(implicit v : MExtCmd,in : ExterneCommandes): Node
 
   object rootV extends View(null) {
     override def toString: String = "+"
@@ -28,6 +34,43 @@ trait JfxComponent extends JfXHelper {
     b
   }
 
+  protected val menuBar: MenuBar = new MenuBar {
+    menus = ObservableBuffer(new Menu {
+      text = "option"
+      items = List(new MenuItem {
+        text = "commande externes"
+        onAction = _ => {
+          val cmdnew = Mutable(ExterneCommandes())
+          val p: Dialog[Boolean] = new Dialog[Boolean]() {
+            initModality(Modality.WindowModal)
+            initOwner(stage)
+
+            dialogPane.value.setContent(optionContent(cmdnew,memo.externeCommandes))
+            resultConverter = e => e.buttonData match {
+              case  ButtonBar.ButtonData.Apply => true
+              case _ => false
+            }
+            val startStopBtnType = new ButtonType("Ok", ButtonBar.ButtonData.Apply)
+            val closeBtnType = new ButtonType("Fermer", ButtonBar.ButtonData.CancelClose)
+            dialogPane.value.getButtonTypes.addAll(
+              startStopBtnType,closeBtnType
+            )
+          }
+
+
+          p.showAndWait() match {
+            case Some(value) => if(value.asInstanceOf[Boolean]){
+              memo = memo.copy(externeCommandes = cmdnew.value)
+              memo.save()
+            }
+            case None =>
+          }
+
+
+        }
+      })
+    })
+  }
   protected val textFieldJar: TextField = emptyTf(editable = false)
   protected val textFieldRepoGit: TextField = emptyTf()
   protected val buttonJar: Button = bt("Jar") { b =>
@@ -51,6 +94,22 @@ trait JfxComponent extends JfXHelper {
   protected val buttonLaunch: Button = bt("Launch") { b =>
     b.onMouseClicked = launch
     b
+  }
+  protected def textFieldGitCmd: TextField = emptyTf()
+  protected def buttonGitCmd(textField: TextField)(implicit e : MExtCmd,in : ExterneCommandes): Button = bt("choisir") { b =>
+    b.onMouseClicked = gitCmdChoose(textField)
+    b
+  }
+
+  protected def textFieldMvnCmd: TextField = emptyTf()
+  protected def buttonMvnCmd(textField: TextField)(implicit e : MExtCmd,in : ExterneCommandes): Button = bt("choisir") { b =>
+    b.onMouseClicked = mvnCmdChoose(textField)
+    b
+  }
+
+  val mainScene = new Scene {
+    fill = Color.AliceBlue
+    content = mainContent
   }
 
 
