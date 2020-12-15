@@ -40,7 +40,7 @@ trait JfxComponent extends JfXHelper {
       items = List(new MenuItem {
         text = "commande externes"
         onAction = _ => {
-          val cmdnew = Mutable(ExterneCommandes())
+          val cmdnew = Mutable(memo.externeCommandes)
           val p: Dialog[Boolean] = new Dialog[Boolean]() {
             initModality(Modality.WindowModal)
             initOwner(stage)
@@ -51,7 +51,7 @@ trait JfxComponent extends JfXHelper {
               case _ => false
             }
             val startStopBtnType = new ButtonType("Ok", ButtonBar.ButtonData.Apply)
-            val closeBtnType = new ButtonType("Fermer", ButtonBar.ButtonData.CancelClose)
+            val closeBtnType = new ButtonType("Annuler", ButtonBar.ButtonData.CancelClose)
             dialogPane.value.getButtonTypes.addAll(
               startStopBtnType,closeBtnType
             )

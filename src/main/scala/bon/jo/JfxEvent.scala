@@ -1,7 +1,7 @@
 package bon.jo
 
 import java.io.File
-import java.nio.file.Path
+import java.nio.file.{Path, Paths}
 
 import bon.jo.SerPers.ImplicitDef.create
 import bon.jo.SerPers.SerObject
@@ -79,6 +79,7 @@ trait JfxEvent {
 
     Option(new FileChooser {
       title = "Choisit un exe ou script"
+      Option(Paths.get(in.git).getParent) map (_.toFile) foreach initialDirectory.set
     }.showOpenDialog(stage)) match {
       case Some(value) =>
         e.value = e.value.copy(git = value.getAbsolutePath )
@@ -95,6 +96,7 @@ trait JfxEvent {
       textField.text = in.mvn
       Option(new FileChooser {
         title = "Choisit un exe ou script"
+        Option(Paths.get(in.mvn).getParent) map (_.toFile) foreach initialDirectory.set
       }.showOpenDialog(stage)) match {
         case Some(value) =>
           e.value = e.value.copy(mvn = value.getAbsolutePath )
