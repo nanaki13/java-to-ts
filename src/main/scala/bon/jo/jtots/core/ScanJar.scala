@@ -60,7 +60,7 @@ object ScanJar extends App {
       out.mkdirs()
     }
     ScanJar.apply(option.jar)
-      .filter(_.isBean)
+      .filter(_.isBeanOrEnum)
       .map(c => {
         outClass += c
         c.toTypeScriptDesc

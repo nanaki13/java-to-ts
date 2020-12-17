@@ -33,6 +33,7 @@ object ClassToTs {
 
     def toTypeScriptDesc: TypeScriptDesc = cop.toTypeScriptDesc(class_)
 
+    def isBeanOrEnum: Boolean = cop.isBean(class_) || class_.isEnum
     def isBean: Boolean = cop.isBean(class_)
   }
 

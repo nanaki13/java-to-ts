@@ -25,11 +25,11 @@ trait JfxEvent {
   val stage: Stage
 
 
-  def log: ProcessLogger = ProcessLogger(appendWithEndLine _)
+  def log: ProcessLogger = ( ProcessLogger(appendWithEndLine _))
 
 
   protected def appendWithEndLine(string: String): Unit = {
-    textArea.appendText(string + "\n")
+    uiDoLater( textArea.appendText(string + "\n"))
 
   }
 

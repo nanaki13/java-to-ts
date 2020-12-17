@@ -1,8 +1,12 @@
 
 
-#J-to-ts
-
+# J-to-ts
+## Puspose
+Minimalist UI for scanning jar (or build jar from repo or pom),
+scan class and output it as TypeScript
 ![Pas d'image][logo]
+
+ 
 
 # Build
 
