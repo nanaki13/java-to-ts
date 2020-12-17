@@ -10,7 +10,7 @@ import bon.jo.jtots.config.AllConfig
 import bon.jo.jtots.config.AllConfig.TypeScriptConfig
 
 import scala.collection.mutable.ListBuffer
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 object ScanJar extends App {
 
@@ -24,9 +24,13 @@ object ScanJar extends App {
       b match {
         case Some(value) => {
           println(name)
-          ThrowHandle.noThrow(defineClass(name, value, 0, value.length), null)(e => {
-            s"""defineClass $name throw $e"""
-          })
+          Try(loadClass(name)) match {
+            case Failure(exception) =>   ThrowHandle.noThrow(defineClass(name, value, 0, value.length), null)(e => {
+              s"""defineClass $name throw $e"""
+            })
+            case Success(value) => value
+          }
+
         }
         case None => null
       }

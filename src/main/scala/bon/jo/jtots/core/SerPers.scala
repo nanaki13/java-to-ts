@@ -60,7 +60,7 @@ object SerPers {
   }
 
   object ImplicitDef{
-    implicit def create[A: IdString](implicit appDir: AppDir) : SerPers[A] = {
+     def create[A: IdString](implicit appDir: AppDir) : SerPers[A] = {
        new SerPersImpl[A]
     }
   }
@@ -77,7 +77,9 @@ object SerPers {
     private def fileid(a: A) = {
       s"${a.getClass}${implicitly[Id].read(a)}.ser"
     }
-    private def filePath(a: A) = Paths.get(appDir.dirOut).resolve( fileid(a)).toFile
+    private def filePath(a: A) = {
+      Paths.get(appDir.dirOut).resolve(fileid(a)).toFile
+    }
 
     private def filteOut(a: A) = new FileOutputStream(filePath(a))
 
@@ -95,10 +97,10 @@ object SerPers {
       }
     }
 
-    override def restore(e: A):  Option[A] = {
-      println(Paths.get(fileid(e)))
-      if(Paths.get(fileid(e)).toFile.exists()){
-        val out = in(filteInt(e))
+    override def restore(a: A):  Option[A] = {
+     // println("ffffffffffffffffffffffffff"+filePath(a))
+      if(filePath(a).exists()){
+        val out = in(filteInt(a))
         val tr =  Try(out.readObject())
         out.close()
         tr match {

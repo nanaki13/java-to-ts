@@ -1,7 +1,6 @@
 package bon.jo.jtots.ui
 
 import bon.jo.jtots.core.ScanJar
-import bon.jo.jtots.core.SerPers.ImplicitDef._
 import bon.jo.jtots.core.SerPers._
 import scalafx.collections.ObservableBuffer
 import scalafx.geometry.Insets
@@ -12,8 +11,7 @@ import scalafx.stage.Modality
 
 trait JfxComponent extends JfXHelper {
   self: JfxEvent with JFxDef =>
-
-
+  import hadleMemo._
   def mainContent: Node
 
   def optionContent(implicit v: MExtCmd, in: ExterneCommandes): Node
@@ -41,12 +39,12 @@ trait JfxComponent extends JfXHelper {
       items = List(new MenuItem {
         text = "commande externes"
         onAction = _ => {
-          val cmdnew = Mutable(memo.externeCommandes)
+          val cmdnew = Mutable(hadleMemo.memo.externeCommandes)
           val p: Dialog[Boolean] = new Dialog[Boolean]() {
             initModality(Modality.WindowModal)
             initOwner(stage)
 
-            dialogPane.value.setContent(optionContent(cmdnew, memo.externeCommandes))
+            dialogPane.value.setContent(optionContent(cmdnew, hadleMemo.memo.externeCommandes))
             resultConverter = e => e.buttonData match {
               case ButtonBar.ButtonData.Apply => true
               case _ => false
@@ -61,8 +59,8 @@ trait JfxComponent extends JfXHelper {
 
           p.showAndWait() match {
             case Some(value) => if (value.asInstanceOf[Boolean]) {
-              memo = memo.copy(externeCommandes = cmdnew.value)
-              memo.save()
+              hadleMemo.memo = hadleMemo.memo.copy(externeCommandes = cmdnew.value)
+              hadleMemo.memo.save()
             }
             case None =>
           }

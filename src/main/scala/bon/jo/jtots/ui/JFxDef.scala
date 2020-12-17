@@ -1,6 +1,6 @@
 package bon.jo.jtots.ui
 
-import bon.jo.HaveOneMemo
+import bon.jo.{HaveOneMemo, Memo}
 import bon.jo.jtots.config.AllConfig
 import bon.jo.jtots.core.ClassToTs._
 import bon.jo.jtots.config.AllConfig.{AppDir, TypeScriptConfig}
@@ -9,7 +9,8 @@ import scalafx.application.JFXApp.PrimaryStage
 import scalafx.scene.Node
 import scalafx.scene.control._
 import scalafx.scene.layout.BorderPane
-
+import bon.jo.jtots.core.SerPers._
+import ImplicitDef._
 import scala.collection.mutable.ListBuffer
 
 
@@ -18,13 +19,15 @@ import scala.collection.mutable.ListBuffer
 
 
 
-trait JFxDef  extends HaveOneMemo with JfxComponent with JfxEvent  {
+trait JFxDef  extends JfxComponent with JfxEvent  {
   implicit var options: AllConfig = AllConfig("")
 
   var pomFile = ""
   implicit val optionTypeScript: TypeScriptConfig = options.optionTypeScript
   implicit val appDir : AppDir = options.appDir
   def mainContent : BorderPane
+
+  object hadleMemo extends HaveOneMemo
 
   def go(): Unit
 }
@@ -41,13 +44,13 @@ object JFxDef{
 
     private def restoreMemo(): Unit = {
 
-      memo.lastDir.foreach(lDir => {
+      hadleMemo.memo.lastDir.foreach(lDir => {
         changeDirOut(lDir)
         textFieldOut.text = lDir
         textFieldOut.setPrefWidth(lDir.length * 7)
 
       })
-      memo.lastJat.foreach(jar => {
+      hadleMemo.memo.lastJat.foreach(jar => {
         changeJar(jar)
         textFieldJar.text = jar
         textFieldJar.setPrefWidth(jar.length * 7)

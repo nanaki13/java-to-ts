@@ -4,9 +4,10 @@ import java.io.File
 import java.nio.file.{Path, Paths}
 
 import bon.jo.Memo
+import bon.jo.jtots.config.AllConfig.AppDir
 import bon.jo.jtots.core.ScanJar
-import bon.jo.jtots.core.SerPers.ImplicitDef._
-import bon.jo.jtots.core.SerPers._
+
+
 import javafx.event.{Event, EventHandler}
 import javafx.scene.input.MouseEvent
 import scalafx.scene.control.{Button, TextField}
@@ -17,10 +18,12 @@ import scala.concurrent.Future
 import scala.sys.process.ProcessLogger
 import scala.sys.process._
 import scala.util.{Failure, Success, Try}
+import bon.jo.jtots.core.SerPers._
 
 trait JfxEvent {
   self: JFxDef =>
 
+  import hadleMemo._
 
   val stage: Stage
 
@@ -53,7 +56,7 @@ trait JfxEvent {
     Option(new FileChooser {
       title = "Choisit un jar"
       extensionFilters.add(filter)
-      initialDirectory = memo match {
+      initialDirectory = hadleMemo.memo match {
         case Memo(_, Some(jar), _) => new File(jar).getParentFile
         case _ => null
       }
@@ -67,10 +70,13 @@ trait JfxEvent {
     }
   }
 
-  def jarSource: File = new File(memo.lastJat.get)
+  def jarSource: File = new File(hadleMemo.memo.lastJat.get)
 
   def jarSource_=(value: File): Unit = {
     memo = memo.copy(lastJat = Some(value.getAbsolutePath))
+
+
+
     memo.save()
     options = {
       textFieldJar.textProperty().setValue(value.getAbsolutePath)
