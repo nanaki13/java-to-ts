@@ -160,8 +160,8 @@ trait JfxEvent {
         Future {
           val old = runningStart(buttonPom)
           `mvn clean package`(value)
-          value.getParentFile.toPath.resolve("target").toFile.listFiles().filter(_.getName.endsWith(".jar"))
-            .foreach(jarSource_=)
+        uiDoLater( value.getParentFile.toPath.resolve("target").toFile.listFiles().filter(_.getName.endsWith(".jar"))
+            .foreach(jarSource_=))
           runningStop(buttonPom, old)
     }
       case None =>
@@ -176,10 +176,12 @@ trait JfxEvent {
   }
 
   protected def `git cloneOrPull`(repo: String, value: File, repoPath: Path): Unit = {
-    if (!repoPath.toFile.exists()) {
+    println(repo: String, value: File, repoPath: Path)
+    if (!repoPath.toFile.exists() || repoPath.toFile.listFiles().isEmpty) {
       new java.lang.ProcessBuilder().directory(value).command(memo.externeCommandes.git, "clone", repo) ! log
+    }else{
+      new java.lang.ProcessBuilder().directory(repoPath.toFile).command(memo.externeCommandes.git, "pull", repo) ! log
     }
-    new java.lang.ProcessBuilder().directory(value).command(memo.externeCommandes.git, "pull", repo) ! log
   }
 
   protected def outTarget: javafx.event.EventHandler[MouseEvent] = { _ =>
