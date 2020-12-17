@@ -1,4 +1,4 @@
-package bon.jo
+package bon.jo.jtots.ui
 
 import javafx.event.Event
 import javafx.scene.input.MouseEvent

@@ -1,7 +1,8 @@
-package bon.jo
+package bon.jo.jtots.ui
 
-import bon.jo.SerPers.ImplicitDef.create
-import bon.jo.SerPers.SerObject
+import bon.jo.jtots.core.ScanJar
+import bon.jo.jtots.core.SerPers.ImplicitDef._
+import bon.jo.jtots.core.SerPers._
 import scalafx.collections.ObservableBuffer
 import scalafx.geometry.Insets
 import scalafx.scene.control._
@@ -15,7 +16,7 @@ trait JfxComponent extends JfXHelper {
 
   def mainContent: Node
 
-  def optionContent(implicit v : MExtCmd,in : ExterneCommandes): Node
+  def optionContent(implicit v: MExtCmd, in: ExterneCommandes): Node
 
   object rootV extends View(null) {
     override def toString: String = "+"
@@ -45,21 +46,21 @@ trait JfxComponent extends JfXHelper {
             initModality(Modality.WindowModal)
             initOwner(stage)
 
-            dialogPane.value.setContent(optionContent(cmdnew,memo.externeCommandes))
+            dialogPane.value.setContent(optionContent(cmdnew, memo.externeCommandes))
             resultConverter = e => e.buttonData match {
-              case  ButtonBar.ButtonData.Apply => true
+              case ButtonBar.ButtonData.Apply => true
               case _ => false
             }
             val startStopBtnType = new ButtonType("Ok", ButtonBar.ButtonData.Apply)
             val closeBtnType = new ButtonType("Annuler", ButtonBar.ButtonData.CancelClose)
             dialogPane.value.getButtonTypes.addAll(
-              startStopBtnType,closeBtnType
+              startStopBtnType, closeBtnType
             )
           }
 
 
           p.showAndWait() match {
-            case Some(value) => if(value.asInstanceOf[Boolean]){
+            case Some(value) => if (value.asInstanceOf[Boolean]) {
               memo = memo.copy(externeCommandes = cmdnew.value)
               memo.save()
             }
@@ -95,14 +96,17 @@ trait JfxComponent extends JfXHelper {
     b.onMouseClicked = launch
     b
   }
+
   protected def textFieldGitCmd: TextField = emptyTf()
-  protected def buttonGitCmd(textField: TextField)(implicit e : MExtCmd,in : ExterneCommandes): Button = bt("choisir") { b =>
+
+  protected def buttonGitCmd(textField: TextField)(implicit e: MExtCmd, in: ExterneCommandes): Button = bt("choisir") { b =>
     b.onMouseClicked = gitCmdChoose(textField)
     b
   }
 
   protected def textFieldMvnCmd: TextField = emptyTf()
-  protected def buttonMvnCmd(textField: TextField)(implicit e : MExtCmd,in : ExterneCommandes): Button = bt("choisir") { b =>
+
+  protected def buttonMvnCmd(textField: TextField)(implicit e: MExtCmd, in: ExterneCommandes): Button = bt("choisir") { b =>
     b.onMouseClicked = mvnCmdChoose(textField)
     b
   }

@@ -1,7 +1,9 @@
-package bon.jo
+package bon.jo.jtots.core
 
 import java.io._
 import java.nio.file.Paths
+
+import bon.jo.jtots.config.AllConfig.AppDir
 
 import scala.util.{Failure, Success, Try}
 
@@ -58,12 +60,12 @@ object SerPers {
   }
 
   object ImplicitDef{
-    implicit def create[A: IdString] : SerPers[A] = {
+    implicit def create[A: IdString](implicit appDir: AppDir) : SerPers[A] = {
        new SerPersImpl[A]
     }
   }
-  class SerPersImpl[A: IdString] extends SerPers[A] {
-    type id = IdString[A]
+  class SerPersImpl[A: IdString](implicit appDir: AppDir) extends SerPers[A] {
+    type Id = IdString[A]
 
     private def in(inp: InputStream) = new ObjectInputStream(new BufferedInputStream(inp))
 
@@ -73,12 +75,13 @@ object SerPers {
     }
 
     private def fileid(a: A) = {
-      s"${a.getClass}${implicitly[id].read(a)}.ser"
+      s"${a.getClass}${implicitly[Id].read(a)}.ser"
     }
+    private def filePath(a: A) = Paths.get(appDir.dirOut).resolve( fileid(a)).toFile
 
-    private def filteOut(a: A) = new FileOutputStream(fileid(a))
+    private def filteOut(a: A) = new FileOutputStream(filePath(a))
 
-    private def filteInt(a: A) = new FileInputStream(fileid(a))
+    private def filteInt(a: A) = new FileInputStream(filePath(a))
     override def save(e: A): Unit = {
       val (outp, ouIn) = out
       val fileOut = filteOut(e)
@@ -93,6 +96,7 @@ object SerPers {
     }
 
     override def restore(e: A):  Option[A] = {
+      println(Paths.get(fileid(e)))
       if(Paths.get(fileid(e)).toFile.exists()){
         val out = in(filteInt(e))
         val tr =  Try(out.readObject())

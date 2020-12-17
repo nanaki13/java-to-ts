@@ -1,6 +1,7 @@
 package bon.jo
 
-import bon.jo.ScanJar.{apply, parseArgs}
+import bon.jo.jtots.config.AllConfig
+import bon.jo.jtots.core.ScanJar.apply
 
 import scala.util.Success
 
@@ -17,7 +18,7 @@ object MainToTypeScript extends App {
         |
         |""".stripMargin)
     case Array("--ui") => Main.main(args)
-    case other@_ => parseArgs(other) match {
+    case other@_ => AllConfig.parseArgs(other) match {
       case Success( option) => apply()(option)
       case _ =>
     }

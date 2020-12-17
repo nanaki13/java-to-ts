@@ -1,10 +1,12 @@
-package bon.jo
+package bon.jo.jtots.ui
 
 import java.io.File
 import java.nio.file.{Path, Paths}
 
-import bon.jo.SerPers.ImplicitDef.create
-import bon.jo.SerPers.SerObject
+import bon.jo.Memo
+import bon.jo.jtots.core.ScanJar
+import bon.jo.jtots.core.SerPers.ImplicitDef._
+import bon.jo.jtots.core.SerPers._
 import javafx.event.{Event, EventHandler}
 import javafx.scene.input.MouseEvent
 import scalafx.scene.control.{Button, TextField}
@@ -12,6 +14,7 @@ import scalafx.stage.{DirectoryChooser, FileChooser, Stage}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.sys.process.ProcessLogger
 import scala.sys.process._
 import scala.util.{Failure, Success, Try}
 
@@ -51,7 +54,7 @@ trait JfxEvent {
       title = "Choisit un jar"
       extensionFilters.add(filter)
       initialDirectory = memo match {
-        case Memo(_, Some(jar),_) => new File(jar).getParentFile
+        case Memo(_, Some(jar), _) => new File(jar).getParentFile
         case _ => null
       }
 
@@ -70,28 +73,31 @@ trait JfxEvent {
     memo = memo.copy(lastJat = Some(value.getAbsolutePath))
     memo.save()
     options = {
-      textFieldJar.textProperty().setValue( value.getAbsolutePath)
+      textFieldJar.textProperty().setValue(value.getAbsolutePath)
       options.copy(value.getAbsolutePath)
     }
 
   }
-  protected def gitCmdChoose(textField: TextField)(implicit e : MExtCmd,in : ExterneCommandes): javafx.event.EventHandler[MouseEvent] = event {
+
+  protected def gitCmdChoose(textField: TextField)(implicit e: MExtCmd, in: ExterneCommandes): javafx.event.EventHandler[MouseEvent] = event {
 
     Option(new FileChooser {
       title = "Choisit un exe ou script"
       Option(Paths.get(in.git).getParent) map (_.toFile) foreach initialDirectory.set
     }.showOpenDialog(stage)) match {
       case Some(value) =>
-        e.value = e.value.copy(git = value.getAbsolutePath )
+        e.value = e.value.copy(git = value.getAbsolutePath)
         textField.text = value.getAbsolutePath
       case None =>
     }
 
   }
-  case class Mutable[A](var value : A)
+
+  case class Mutable[A](var value: A)
+
   type MExtCmd = Mutable[ExterneCommandes]
 
-  protected def mvnCmdChoose(textField: TextField)(implicit e : MExtCmd,in : ExterneCommandes): javafx.event.EventHandler[MouseEvent] = event {
+  protected def mvnCmdChoose(textField: TextField)(implicit e: MExtCmd, in: ExterneCommandes): javafx.event.EventHandler[MouseEvent] = event {
     {
       textField.text = in.mvn
       Option(new FileChooser {
@@ -99,19 +105,21 @@ trait JfxEvent {
         Option(Paths.get(in.mvn).getParent) map (_.toFile) foreach initialDirectory.set
       }.showOpenDialog(stage)) match {
         case Some(value) =>
-          e.value = e.value.copy(mvn = value.getAbsolutePath )
+          e.value = e.value.copy(mvn = value.getAbsolutePath)
           textField.text = value.getAbsolutePath
         case None =>
       }
 
     }
   }
+
+  private def outGit = Paths.get(appDir.dirOut).resolve("app-git-clone").toFile
   protected def gitCloneTarget: javafx.event.EventHandler[MouseEvent] = event {
 
     val repo = textFieldRepoGit.getText
-    Future{
+    Future {
       val old = runningStart(buttonGit)
-      val rrot = new File("app-git-clone")
+      val rrot = outGit
       rrot.mkdirs()
       val fileGitOption = repo match {
         case ParseNonRepo(value) => Some(rrot.toPath.resolve(value))
@@ -123,51 +131,51 @@ trait JfxEvent {
         `git cloneOrPull`(repo, rrot, p)
         `mvn clean package`(p.resolve("pom.xml").toFile)
         println(p.resolve("target").toFile.listFiles().toList)
-        uiDoLater{
+        uiDoLater {
           p.resolve("target").toFile.listFiles().toList
             .filter(_.getName.endsWith(".jar")).foreach(jarSource_=)
-          buttonGit.textProperty().setValue( "clone")
+          buttonGit.textProperty().setValue("clone")
         }
       })
-      runningStop(buttonGit,old)
+      runningStop(buttonGit, old)
     }
   }
 
   protected def pomTarget[A <: Event]: EventHandler[A] = event[A] {
 
 
-      val filter = new FileChooser.ExtensionFilter(
-        "pom File", "*.xml"
-      )
-      Option(new FileChooser {
-        title = "Choisit un pom"
-        extensionFilters.add(filter)
+    val filter = new FileChooser.ExtensionFilter(
+      "pom File", "*.xml"
+    )
+    Option(new FileChooser {
+      title = "Choisit un pom"
+      extensionFilters.add(filter)
 
 
-      }.showOpenDialog(stage)) match {
-        case Some(value) =>
+    }.showOpenDialog(stage)) match {
+      case Some(value) =>
 
-          pomFile = value.getAbsolutePath
-          textFieldPom.text = pomFile
-          Future{
-            val old = runningStart(buttonPom)
-            `mvn clean package`(value)
-            value.getParentFile.toPath.resolve("target").toFile.listFiles().filter(_.getName.endsWith(".jar"))
-              .foreach(jarSource_=)
-            runningStop(buttonPom,old)
-          }
-        case None =>
-      }
+        pomFile = value.getAbsolutePath
+        textFieldPom.text = pomFile
+        Future {
+          val old = runningStart(buttonPom)
+          `mvn clean package`(value)
+          value.getParentFile.toPath.resolve("target").toFile.listFiles().filter(_.getName.endsWith(".jar"))
+            .foreach(jarSource_=)
+          runningStop(buttonPom, old)
+    }
+      case None =>
+    }
 
 
   }
 
-  protected def `mvn clean package`(value: File): Unit =  {
+  protected def `mvn clean package`(value: File): Unit = {
     new java.lang.ProcessBuilder()
       .directory(value.getParentFile).command(memo.externeCommandes.mvn, "package") ! log
   }
 
-  protected def `git cloneOrPull`(repo: String, value: File, repoPath: Path): Unit =  {
+  protected def `git cloneOrPull`(repo: String, value: File, repoPath: Path): Unit = {
     if (!repoPath.toFile.exists()) {
       new java.lang.ProcessBuilder().directory(value).command(memo.externeCommandes.git, "clone", repo) ! log
     }
@@ -192,32 +200,34 @@ trait JfxEvent {
     }
   }
 
-  def runningStart(b : Button): String ={
+  def runningStart(b: Button): String = {
     val old = b.text.value
     uiDoLater {
       b.disable = true
-      b.text.setValue( "Running")
+      b.text.setValue("Running")
     }
     old
   }
-  def runningStop(b : Button,old : String): Unit ={
+
+  def runningStop(b: Button, old: String): Unit = {
     uiDoLater {
       b.disable = false
-      uiDoLater(b.text.setValue( old))
+      uiDoLater(b.text.setValue(old))
     }
   }
-  protected def launch: javafx.event.EventHandler[MouseEvent] = { _ =>
-    Future{
 
-      val old =runningStart(buttonLaunch)
+  protected def launch: javafx.event.EventHandler[MouseEvent] = { _ =>
+    Future {
+
+      val old = runningStart(buttonLaunch)
       Try(ScanJar()) match {
-        case Failure(exception) => uiDoLater( textArea.text.value = s"${textArea.text.value}\n$exception:${Option(exception.getMessage).getOrElse("Pas de message")}${Option(exception.getCause).map(_.getMessage).getOrElse("")}")
-        case Success(clazzs) => uiDoLater{
+        case Failure(exception) => uiDoLater(textArea.text.value = s"${textArea.text.value}\n$exception:${Option(exception.getMessage).getOrElse("Pas de message")}${Option(exception.getCause).map(_.getMessage).getOrElse("")}")
+        case Success(clazzs) => uiDoLater {
           view(clazzs)
           textArea.text.value = s"${textArea.text.value}\nOk"
         }
       }
-      uiDoLater(runningStop(buttonLaunch,old))
+      uiDoLater(runningStop(buttonLaunch, old))
     }
   }
 

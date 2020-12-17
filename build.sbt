@@ -1,7 +1,7 @@
 name := "codegen"
 
-version := "0.1"
-
+version := "0.1-SNAPSHOT"
+organization := "bon.jo"
 scalaVersion := "2.13.4"
 
 

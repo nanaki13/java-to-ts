@@ -1,13 +1,14 @@
-package bon.jo
+package bon.jo.jtots.ui
 
-
-import bon.jo.ScanJar.{C, OptionTypeScript, ToFileOption, createCimpl}
+import bon.jo.HaveOneMemo
+import bon.jo.jtots.config.AllConfig
+import bon.jo.jtots.core.ClassToTs._
+import bon.jo.jtots.config.AllConfig.{AppDir, TypeScriptConfig}
 import scalafx.Includes.{jfxReadOnlyDoubleProperty2sfx, _}
 import scalafx.application.JFXApp.PrimaryStage
 import scalafx.scene.Node
 import scalafx.scene.control._
 import scalafx.scene.layout.BorderPane
-import scalafx.scene.layout.Pane.sfxPane2jfx
 
 import scala.collection.mutable.ListBuffer
 
@@ -18,10 +19,11 @@ import scala.collection.mutable.ListBuffer
 
 
 trait JFxDef  extends HaveOneMemo with JfxComponent with JfxEvent  {
-  implicit var options: ToFileOption = ToFileOption("")
+  implicit var options: AllConfig = AllConfig("")
 
   var pomFile = ""
-  implicit val optionTypeScript: OptionTypeScript = options.optionTypeScript
+  implicit val optionTypeScript: TypeScriptConfig = options.optionTypeScript
+  implicit val appDir : AppDir = options.appDir
   def mainContent : BorderPane
 
   def go(): Unit
