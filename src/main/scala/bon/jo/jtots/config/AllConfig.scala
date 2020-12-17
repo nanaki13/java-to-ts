@@ -23,7 +23,7 @@ object AllConfig {
 
   case class OutConfig(dirOut: String = ".")
 
-  case class AppDir(dirOut: String = Paths.get(System.getProperty("user.dir")).resolve(".j-to-ts").toString)
+  case class AppDir(dirOut: String = Paths.get(System.getProperty("user.home")).resolve(".j-to-ts").toString)
 
   sealed trait TypeScriptClassType
 
