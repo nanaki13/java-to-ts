@@ -16,25 +16,21 @@ object ScanJar extends App {
 
   def classListByte(jarPath: String): Iterable[(String, Array[Byte])] = (new ZipFile(jarPath)).iterator()
 
+println(ScanJar("""D:\Donnees\Maven\repository\fr\pe\sspr\exposition\ex025\ex025-formation-rest-v2\3.8.1-1\ex025-formation-rest-v2-3.8.1-1.jar""").toList)
   class CustomCl(class_ : Iterable[(String, Array[Byte])]) extends ClassLoader(Thread.currentThread().getContextClassLoader) {
     val map = class_.map(e => e._1.replace(".class", "").replace("/", ".") -> e._2).toMap
 
+    val mu = scala.collection.mutable.Map[String,Class[_]]()
     override def findClass(name: String): Class[_] = {
       val b = map.get(name)
-      b match {
+      mu.getOrElseUpdate(name,b match {
         case Some(value) => {
-          println(name)
-          Try(loadClass(name)) match {
-            case Failure(exception) =>   ThrowHandle.noThrow(defineClass(name, value, 0, value.length), null)(e => {
-              s"""defineClass $name throw $e"""
-            })
-            case Success(value) => value
-          }
-
+          ThrowHandle.noThrow(defineClass(name, value, 0, value.length), null)(e => {
+            s"""defineClass $name throw $e"""
+          })
         }
         case None => null
-      }
-
+      })
     }
 
     def findClassOption(name: String): Option[Class[_]] = {
