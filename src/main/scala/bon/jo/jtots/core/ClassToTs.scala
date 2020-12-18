@@ -1,6 +1,7 @@
 package bon.jo.jtots.core
 
 import java.lang.reflect.{Method, Type}
+import java.nio.file.Paths
 
 import bon.jo.jtots.config.AllConfig.TypeScriptConfig
 
@@ -73,6 +74,20 @@ object ClassToTs {
       }
     }.toSet
 
+    def filePath(class_ : Class[_]) = {
+      val f = class_.getName.replace('.','/')
+      val fName = f.substring(f.lastIndexOf('/')+1)
+      val dir = f.substring(0,f.lastIndexOf('/'))
+      val fNameClean = fName.head.toLower+fName.tail.flatMap{ c =>
+        if(c.isUpper){
+          c.toLower+"-"
+        }else{
+          s"${c}"
+        }
+
+      }
+      Paths.get(dir,fNameClean)
+    }
     def toTypeScript(class_ : Class[_]): String = {
       if (class_.isEnum) {
         s"""

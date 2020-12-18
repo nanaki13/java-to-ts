@@ -18,7 +18,7 @@ object Main extends JFXApp {
   stage = stage_
   private val jfx = JFxDef()
 
-  val  p = Paths.get(jfx.options.appDir.dirOut)
+  val  p = Paths.get(jfx.config.appDir.dirOut)
   p.toFile.mkdirs()
   println(s""" app data in $p""")
   stage.scene = new Scene {

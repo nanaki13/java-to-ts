@@ -20,11 +20,11 @@ import scala.collection.mutable.ListBuffer
 
 
 trait JFxDef  extends JfxComponent with JfxEvent  {
-  implicit var options: AllConfig = AllConfig("")
+  implicit var config: AllConfig = AllConfig("")
 
   var pomFile = ""
- // implicit val optionTypeScript: TypeScriptConfig = options.optionTypeScript
-  implicit val appDir : AppDir = options.appDir
+
+  implicit val appDir : AppDir = config.appDir
   def mainContent : BorderPane
 
   object hadleMemo extends HaveOneMemo
@@ -37,10 +37,10 @@ object JFxDef{
     override lazy val stage: PrimaryStage =s
 
     private def changeDirOut(path: String) = {
-      options = options.copy(outOption = options.outOption.copy(path))
+      config = config.copy(outOption = config.outOption.copy(path))
     }
 
-    private def changeJar(jar: String): Unit = options = options.copy(jar = jar)
+    private def changeJar(jar: String): Unit = config = config.copy(jar = jar)
 
     private def restoreMemo(): Unit = {
 
@@ -96,7 +96,7 @@ object JFxDef{
 
     def mainContent : BorderPane = _bp
     def go(): Unit = {
-      implicit val optionTypeScript: TypeScriptConfig = options.optionTypeScript
+      implicit val optionTypeScript: TypeScriptConfig = config.optionTypeScript
       classView.cellFactory = v => {
         val cell = new TreeCell[View](new javafx.scene.control.TreeCell[View] {
           override def updateItem(t: View, empty: Boolean): Unit = {

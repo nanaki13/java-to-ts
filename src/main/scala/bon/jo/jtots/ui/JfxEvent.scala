@@ -77,9 +77,9 @@ trait JfxEvent {
 
 
     memo.save()
-    options = {
+    config = {
       textFieldJar.textProperty().setValue(value.getAbsolutePath)
-      options.copy(value.getAbsolutePath)
+      config.copy(value.getAbsolutePath)
     }
 
   }
@@ -202,7 +202,7 @@ trait JfxEvent {
         memo = memo.copy(lastDir = Some(value.getAbsolutePath))
         memo.save()
         textFieldOut.text = value.getAbsolutePath
-        options = options.copy(outOption = options.outOption.copy(value.getAbsolutePath))
+        config = config.copy(outOption = config.outOption.copy(value.getAbsolutePath))
       case None =>
     }
   }
@@ -228,7 +228,7 @@ trait JfxEvent {
       val cf = Cf()
       import cf._
       val old = runningStart(buttonViewTree)
-      Try(ScanJar.listBeanOrEnumClass(options.jar)) match {
+      Try(ScanJar.listBeanOrEnumClass(config.jar)) match {
         case Failure(exception) => uiDoLater(textArea.text.value = s"${textArea.text.value}\n$exception:${Option(exception.getMessage).getOrElse("Pas de message")}${Option(exception.getCause).map(_.getMessage).getOrElse("")}")
         case Success(clazzs) => uiDoLater {
           view(clazzs.toList)
@@ -252,7 +252,7 @@ trait JfxEvent {
        val cf = Cf()
        import cf._
         val old = runningStart(buttonTsToOutDir)
-        Try(ScanJar.listBeanOrEnumClass(options.jar)) match {
+        Try(ScanJar.listBeanOrEnumClass(config.jar)) match {
           case Failure(exception) => uiDoLater(textArea.text.value = s"${textArea.text.value}\n$exception:${Option(exception.getMessage).getOrElse("Pas de message")}${Option(exception.getCause).map(_.getMessage).getOrElse("")}")
           case Success(clazzs) => uiDoLater {
             ProcessClass.toTsDirectory(clazzs.toList)
