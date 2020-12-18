@@ -1,6 +1,6 @@
 package bon.jo.jtots.ui
 
-import bon.jo.jtots.core.ScanJar
+import bon.jo.jtots.core.{ProcessClass, ScanJar}
 import bon.jo.jtots.core.SerPers._
 import scalafx.collections.ObservableBuffer
 import scalafx.geometry.Insets
@@ -82,16 +82,21 @@ trait JfxComponent extends JfXHelper {
     b
   }
   protected val textFieldPom: TextField = emptyTf()
-  protected val buttonPom: Button = bt("pom") { b =>
+  protected val buttonPom: Button = bt("Choisir pom") { b =>
     b.onMouseClicked = pomTarget
     b
   }
-  protected val buttonGit: Button = bt("clone") { b =>
+  protected val buttonGit: Button = bt("Clone or pull") { b =>
     b.onMouseClicked = gitCloneTarget
     b
   }
-  protected val buttonLaunch: Button = bt("Launch") { b =>
-    b.onMouseClicked = launch
+  protected val buttonViewTree: Button = bt("View") { b =>
+    b.onMouseClicked = viewTree
+    b
+  }
+
+  protected val buttonTsToOutDir: Button = bt("TypeScript To out") { b =>
+    b.onMouseClicked = typeScriptToOut
     b
   }
 
@@ -119,7 +124,7 @@ trait JfxComponent extends JfXHelper {
     margin = Insets(5)
   }
 
-  protected def view(valuep: List[ScanJar.c]): Unit = {
+  protected def view(valuep: List[ProcessClass.c]): Unit = {
     val ch = valuep.sortWith((a, b) => a.getName < b.getName).map(View).map(_ ())
     rNode.children = ch
     rNode.setExpanded(true)

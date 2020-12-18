@@ -4,10 +4,9 @@ import java.io.File
 import java.nio.file.{Path, Paths}
 
 import bon.jo.Memo
-import bon.jo.jtots.config.AllConfig.AppDir
-import bon.jo.jtots.core.ScanJar
-
-
+import bon.jo.jtots.config.AllConfig
+import bon.jo.jtots.config.AllConfig.{AppDir, OutConfig, TypeScriptConfig}
+import bon.jo.jtots.core.{ProcessClass, ScanJar}
 import javafx.event.{Event, EventHandler}
 import javafx.scene.input.MouseEvent
 import scalafx.scene.control.{Button, TextField}
@@ -224,20 +223,46 @@ trait JfxEvent {
     }
   }
 
-  protected def launch: javafx.event.EventHandler[MouseEvent] = { _ =>
+  protected def viewTree: javafx.event.EventHandler[MouseEvent] = { _ =>
     Future {
-
-      val old = runningStart(buttonLaunch)
-      Try(ScanJar()) match {
+      val cf = Cf()
+      import cf._
+      val old = runningStart(buttonViewTree)
+      Try(ScanJar.listBeanOrEnumClass(options.jar)) match {
         case Failure(exception) => uiDoLater(textArea.text.value = s"${textArea.text.value}\n$exception:${Option(exception.getMessage).getOrElse("Pas de message")}${Option(exception.getCause).map(_.getMessage).getOrElse("")}")
         case Success(clazzs) => uiDoLater {
-          view(clazzs)
+          view(clazzs.toList)
           textArea.text.value = s"${textArea.text.value}\nOk"
         }
       }
-      uiDoLater(runningStop(buttonLaunch, old))
+      uiDoLater(runningStop(buttonViewTree, old))
     }
   }
+  case class Cf(){
+    val allConfig : AllConfig = implicitly
+    implicit val outConfig: OutConfig = allConfig.outOption
+    implicit val typeScriptConfig: TypeScriptConfig = allConfig.optionTypeScript
 
+  }
+  def conf(f : =>Unit) = {
+
+  }
+  protected def typeScriptToOut :  javafx.event.EventHandler[MouseEvent] = { _ =>
+    Future {
+       val cf = Cf()
+       import cf._
+        val old = runningStart(buttonTsToOutDir)
+        Try(ScanJar.listBeanOrEnumClass(options.jar)) match {
+          case Failure(exception) => uiDoLater(textArea.text.value = s"${textArea.text.value}\n$exception:${Option(exception.getMessage).getOrElse("Pas de message")}${Option(exception.getCause).map(_.getMessage).getOrElse("")}")
+          case Success(clazzs) => uiDoLater {
+            ProcessClass.toTsDirectory(clazzs.toList)
+            textArea.text.value = s"${textArea.text.value}\nOk"
+          }
+        }
+        uiDoLater(runningStop(buttonTsToOutDir, old))
+
+
+    }
+  }
 
 }

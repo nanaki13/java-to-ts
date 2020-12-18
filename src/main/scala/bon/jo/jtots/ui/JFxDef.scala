@@ -2,7 +2,7 @@ package bon.jo.jtots.ui
 
 import bon.jo.{HaveOneMemo, Memo}
 import bon.jo.jtots.config.AllConfig
-import bon.jo.jtots.core.ClassToTs._
+import bon.jo.jtots.core.ClassToTs.{CTS,CWithTs,createCimpl,C}
 import bon.jo.jtots.config.AllConfig.{AppDir, TypeScriptConfig}
 import scalafx.Includes.{jfxReadOnlyDoubleProperty2sfx, _}
 import scalafx.application.JFXApp.PrimaryStage
@@ -23,7 +23,7 @@ trait JFxDef  extends JfxComponent with JfxEvent  {
   implicit var options: AllConfig = AllConfig("")
 
   var pomFile = ""
-  implicit val optionTypeScript: TypeScriptConfig = options.optionTypeScript
+ // implicit val optionTypeScript: TypeScriptConfig = options.optionTypeScript
   implicit val appDir : AppDir = options.appDir
   def mainContent : BorderPane
 
@@ -72,7 +72,7 @@ object JFxDef{
       ,
       hb(label("out : "), textFieldOut, buttonOut)
 
-      , vb(buttonLaunch)
+      , hb(buttonViewTree,buttonTsToOutDir)
     )
 
 
@@ -96,6 +96,7 @@ object JFxDef{
 
     def mainContent : BorderPane = _bp
     def go(): Unit = {
+      implicit val optionTypeScript: TypeScriptConfig = options.optionTypeScript
       classView.cellFactory = v => {
         val cell = new TreeCell[View](new javafx.scene.control.TreeCell[View] {
           override def updateItem(t: View, empty: Boolean): Unit = {

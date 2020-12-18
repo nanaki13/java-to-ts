@@ -27,14 +27,17 @@ object ClassToTs {
 
     def gettersToFields: Array[(String, Class[_], Type)] = cop.gettersToFields(class_)
 
+
+
+    def isBeanOrEnum: Boolean = cop.isBean(class_) || class_.isEnum
+    def isBean: Boolean = cop.isBean(class_)
+  }
+  implicit class CTS(class_ : Class[_])(implicit cop: CWithTs) {
     def imports: Set[String] = cop.imports(class_)
 
     def toTypeScript: String = cop.toTypeScript(class_)
 
     def toTypeScriptDesc: TypeScriptDesc = cop.toTypeScriptDesc(class_)
-
-    def isBeanOrEnum: Boolean = cop.isBean(class_) || class_.isEnum
-    def isBean: Boolean = cop.isBean(class_)
   }
 
   class FinalClass(class_ : Class[_])(implicit cop: COp) {
@@ -46,28 +49,8 @@ object ClassToTs {
 
   }
 
-  trait COp {
+  trait CWithTs extends COp{
     implicit val option: TypeScriptConfig
-
-    def toTypeScriptDesc(class_ : Class[_]): TypeScriptDesc = TypeScriptDesc(class_.getSimpleName + ".ts", toTypeScript(class_))
-
-    def isBean(class_ : Class[_]): Boolean = ThrowHandle.noThrow(gettersToFields(class_).nonEmpty, false)(e => {
-      s"""is bean $class_ throw $e"""
-    })
-
-
-    def getters(class_ : Class[_]): Array[Method] = class_.getMethods.filter(m => m.getName != "getClass" && (m.getName.startsWith("get") || m.getName.startsWith("is")))
-
-    def setters(class_ : Class[_]): Array[Method] = class_.getMethods.filter(_.getName.startsWith("set"))
-
-    def gettersToFields(class_ : Class[_]): Array[(String, Class[_], Type)] = getters(class_).filter(e =>
-      ThrowHandle.noThrow(class_.getDeclaredFields.map(_.getName).contains(e.fildName), false)
-      (e => {
-        s"""gettersToFields $class_ throw $e"""
-      })
-
-    ).map(g => (g.fildName, class_.getDeclaredField(g.fildName).getType, class_.getDeclaredField(g.fildName).getGenericType))
-
     val jsNatifType = Set("string", "number", "boolean", "any", "{}", "Date")
 
     def nonePrimitif(s: String): Boolean = {
@@ -110,6 +93,29 @@ object ClassToTs {
 
     }
 
+    def toTypeScriptDesc(class_ : Class[_]): TypeScriptDesc = TypeScriptDesc(class_.getSimpleName + ".ts", toTypeScript(class_))
+  }
+  trait COp {
+
+    def isBean(class_ : Class[_]): Boolean = ThrowHandle.noThrow(gettersToFields(class_).nonEmpty, false)(e => {
+      s"""is bean $class_ throw $e"""
+    })
+
+
+    def getters(class_ : Class[_]): Array[Method] = class_.getMethods.filter(m => m.getName != "getClass" && (m.getName.startsWith("get") || m.getName.startsWith("is")))
+
+    def setters(class_ : Class[_]): Array[Method] = class_.getMethods.filter(_.getName.startsWith("set"))
+
+    def gettersToFields(class_ : Class[_]): Array[(String, Class[_], Type)] = getters(class_).filter(e =>
+      ThrowHandle.noThrow(class_.getDeclaredFields.map(_.getName).contains(e.fildName), false)
+      (e => {
+        s"""gettersToFields $class_ throw $e"""
+      })
+
+    ).map(g => (g.fildName, class_.getDeclaredField(g.fildName).getType, class_.getDeclaredField(g.fildName).getGenericType))
+
+
+
   }
 
   implicit class TypeScript(tuple2: (String, Class[_], Type)) {
@@ -117,10 +123,11 @@ object ClassToTs {
   }
 
 
-  case class CImpl()(implicit val option: TypeScriptConfig) extends COp
+  case class CImpl()(implicit val option: TypeScriptConfig) extends CWithTs
 
-  implicit def createCimpl(implicit option: TypeScriptConfig) = CImpl()
+  implicit def createCimpl(implicit option: TypeScriptConfig): CImpl = CImpl()
 
+  implicit object Cbase extends COp
   implicit class StrToTST(str: (String, Class[_], Type)) {
 
     def tsType: String = {

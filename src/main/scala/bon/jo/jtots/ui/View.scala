@@ -1,6 +1,6 @@
 package bon.jo.jtots.ui
 
-import bon.jo.jtots.core.ScanJar.c
+import bon.jo.jtots.core.ProcessClass.c
 import scalafx.scene.control.TreeItem
 
 /**
