@@ -33,7 +33,7 @@ object SerPers {
 
     /**
      * restore the object
-     * @return
+     * @return the object to use
      */
     def restore(): Option[A]
   }
