@@ -10,7 +10,7 @@ trait Dao[A,ID] {
   type Query
   def create(a: A): FO
 
-  def update(a: A): FO
+  def update(a: A,idOpt : Option[ID] = None): FO
 
   def read(a: ID): FO
   def readAll(): FL
@@ -39,9 +39,9 @@ object Dao {
   object Id {
 
     implicit class UsingMatcher[A: Id](a: A) {
-      def id : Any = implicitly[Id[A]].id(a)
+      def idGeneric : Any = implicitly[Id[A]].id(a)
       def ===(b: A): Boolean = {
-        a.id == b.id
+        a.idGeneric == b.idGeneric
       }
     }
 
@@ -51,7 +51,7 @@ object Dao {
 
     override def create(a: A) : FO = dao.create(a)
 
-    override def update(a: A): FO= dao.update(a)
+    override def update(a: A,id: Option[ID]): FO= dao.update(a,id)
 
     override def read(a: ID): FO = dao.read(a)
 
@@ -78,19 +78,24 @@ object Dao {
       }
 
     }
-    override def update(a: A): FO = okFuture{
-      listBuffer.zipWithIndex.find(_._1 === a).map(e => {
+
+    override def update(a: A,id : Option[ID]): FO = okFuture{
+      def matchEl(b: (A,Int)): Boolean = id match {
+        case Some(value) => b._1.idGeneric == value
+        case None => a === b._1
+      }
+      listBuffer.zipWithIndex.find(matchEl).map(e => {
         listBuffer.remove(e._2)
         listBuffer.insert(e._2, a)
         a
       })
     }
 
-    override def read(a: ID): FO = okFuture(listBuffer.find(_.id == a))
+    override def read(a: ID): FO = okFuture(listBuffer.find(_.idGeneric == a))
 
     override def readAll(): FL = okFuture(listBuffer.toSeq)
 
-    override def delete(a: ID): FB = okFuture(listBuffer.zipWithIndex.find(_._1.id == a).map(e => {
+    override def delete(a: ID): FB = okFuture(listBuffer.zipWithIndex.find(_._1.idGeneric == a).map(e => {
       listBuffer.remove(e._2)
       a
     }) match {

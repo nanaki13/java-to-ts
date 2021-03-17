@@ -21,10 +21,16 @@ class MemoDaoImpl(implicit val db: H2Profile.backend.Database) extends Dao[MemoD
     }
   }
 
-  override def update(a: Entities.Memo): FO = db.run(memos.filter(_.id === a.id).update(a)).map {
-    case 1 => Some(a)
-    case 0 => None
-    case _ => throw new IllegalStateException("plus d'une ligne a été mis a jour")
+  override def update(a: Entities.Memo,id : Option[Int]): FO = {
+    val e = id match {
+      case Some(_) => a.copy(id)
+      case None => a
+    }
+    db.run(memos.filter(_.id === a.id).update(a)).map {
+      case 1 => Some(a)
+      case 0 => None
+      case _ => throw new IllegalStateException("plus d'une ligne a été mis a jour")
+    }
   }
 
   override def read(a: Int): FO = db.run(memos.filter(_.id === a).result.headOption)

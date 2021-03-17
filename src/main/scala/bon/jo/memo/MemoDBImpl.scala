@@ -5,11 +5,11 @@ import bon.jo.memo.MemoDBImpl.TablesQuery._
 import slick.jdbc.H2Profile
 import slick.jdbc.H2Profile.api._
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.Duration
 object MemoDBImpl {
   object Entities{
-    case class Memo(id: Option[Int], content: String)
+    case class Memo(id: Option[Int],title : String, content: String)
     case class KeyWord(id: Option[Int], value: String)
     case class MemoKeywordRel(memo: Int, keyWord: Int)
     case class MemoKeywords(memo: Memo, keyWords: Set[KeyWord])
@@ -19,7 +19,8 @@ object MemoDBImpl {
     class Memos(tag: Tag) extends Table[Memo](tag, "MEMO") {
       def id = column[Int]("ID", O.PrimaryKey, O.AutoInc)
       def content = column[String]("CONTENT")
-      def * = (id.?, content) <> (Memo.tupled, Memo.unapply)
+      def title = column[String]("TITLE")
+      def * = (id.?,title, content) <> (Memo.tupled, Memo.unapply)
       def idx = index("idx_content", content, unique = true)
     }
 
@@ -52,7 +53,7 @@ object MemoDBImpl {
 
     val allinOrder = List(memos,keyswords,memoKeywords)
 
-    def create(implicit db: H2Profile.backend.Database) = allinOrder.map(_.schema.createIfNotExists).map(act => Await.result(db.run(act),Duration.Inf))
+    def create(implicit db: H2Profile.backend.Database,executionContext: ExecutionContext) = Future.sequence(  allinOrder.map(_.schema.createIfNotExists).map(db.run))
   }
 
 

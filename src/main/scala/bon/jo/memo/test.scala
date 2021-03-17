@@ -12,9 +12,9 @@ object test extends App {
 
     MemoDBImpl.TablesQuery.create
 
-    val fut = dao create Entities.Memo(None, "toto") flatMap {
+    val fut = dao create Entities.Memo(None, "toto", "toto") flatMap {
       case None => Future.failed(new IllegalStateException())
-      case Some(value) => dao create Entities.Memo(None, "toto") map {
+      case Some(value) => dao create Entities.Memo(None, "toto", "toto") map {
         case None =>
         case Some(value) => println(value)
       }

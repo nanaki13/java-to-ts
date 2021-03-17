@@ -28,10 +28,16 @@ class KeyWordDaoImpl(implicit val db: H2Profile.backend.Database) extends Dao[Me
   override def findLike(query:  String): FL = {
     db.run(keyswords.filter(_.value.like(s"%$query%")).result)
   }
-  override def update(a: Entities.KeyWord): FO = db.run(keyswords.filter(_.id === a.id).update(a)).map {
-    case 1 => Some(a)
-    case 0 => None
-    case _ => throw new IllegalStateException("plus d'une ligne a été mis a jour")
+  override def update(a: Entities.KeyWord,id : Option[Int]): FO = {
+    val e = id match {
+      case Some(_) => a.copy(id)
+      case None => a
+    }
+    db.run(keyswords.filter(_.id === e.id).update(e)).map {
+      case 1 => Some(e)
+      case 0 => None
+      case _ => throw new IllegalStateException("plus d'une ligne a été mis a jour")
+    }
   }
 
   override def read(a: Int): FO = db.run(keyswords.filter(_.id === a).result.headOption)
