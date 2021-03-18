@@ -1,0 +1,7 @@
+<h2>Key words</h2>>
+<div *ngFor="let item of keywords">
+  {{item.value}} <button (click)="remove(item)">X</button>
+</div>
+<input
+[(ngModel)]="keywWordEdit.value" />
+<button (click)="add()">Add</button>

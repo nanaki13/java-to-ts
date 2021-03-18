@@ -1,0 +1,14 @@
+<p>
+  memo works!
+</p>
+<div *ngFor="let item of memos">
+  <h3>{{item.title}}<button (click)="remove(item)">X</button></h3>
+  {{item.content}}
+</div>
+<input
+[(ngModel)]="memoContent.title" />
+
+<textarea
+[(ngModel)]="memoContent.content" >
+</textarea>
+<button (click)="add()">Add</button>

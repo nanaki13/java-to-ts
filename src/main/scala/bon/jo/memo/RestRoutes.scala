@@ -1,20 +1,16 @@
 package bon.jo.memo
 
-import akka.http.scaladsl.marshalling.{Marshaller, Marshalling, ToResponseMarshallable, ToResponseMarshaller}
-import akka.http.scaladsl.model.HttpMethods._
+import akka.http.scaladsl.marshalling.{Marshaller, Marshalling, ToResponseMarshaller}
 import akka.http.scaladsl.model.StatusCodes.InternalServerError
-import akka.http.scaladsl.model.headers.{`Access-Control-Allow-Credentials`, `Access-Control-Allow-Headers`, `Access-Control-Allow-Methods`, `Access-Control-Allow-Origin`}
-import akka.http.scaladsl.model.{ContentTypes, HttpCharset, HttpEntity, HttpRequest, HttpResponse, StatusCodes}
+import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.{Directive0, Route}
-import akka.http.scaladsl.unmarshalling.{FromRequestUnmarshaller, Unmarshaller}
+import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
 import org.json4s.DefaultFormats
 import slick.jdbc.H2Profile
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.reflect.ClassTag
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 
 trait RestRoutes[A] extends ReqResConv[A] with CORSHandler {

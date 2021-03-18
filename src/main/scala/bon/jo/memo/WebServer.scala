@@ -3,15 +3,12 @@ package bon.jo.memo
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.marshalling.{Marshal, Marshaller}
-import akka.http.scaladsl.model.{HttpEntity, HttpMethod, HttpMethods, HttpRequest}
-import akka.http.scaladsl.unmarshalling.Unmarshal
-import bon.jo.memo.MemoDBImpl.Entities
+import akka.http.scaladsl.server.Directives._
 import org.json4s.DefaultFormats
 import slick.jdbc.H2Profile
 import slick.jdbc.H2Profile.api.Database
 
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.ExecutionContextExecutor
 import scala.io.StdIn
 
 object WebServer extends App{
@@ -21,12 +18,16 @@ object WebServer extends App{
 
   private implicit val db: H2Profile.backend.Database = Database.forConfig("h2mem1")
   private implicit object memoDao extends MemoDaoImpl()
+  private implicit object keyWordDao extends KeyWordDaoImpl()
+  private implicit object memoKeyWordDao extends MemoKeyWordsDaoImpl()
   private implicit val df :DefaultFormats = DefaultFormats
   private val memoRoute = RestRoutes[MemoDBImpl.Entities.Memo]("memo")
-
+  private val keywordRoute = RestRoutes[MemoDBImpl.Entities.KeyWord]("keyword")
+  private val memoKeywWordRoute = RestRoutes[MemoDBImpl.Entities.MemoKeywords]("memo-keyword")
   MemoDBImpl.TablesQuery.create.map{
     _ =>
-      val bindingFuture = Http().newServerAt("localhost", 8080).bind(memoRoute.routes)
+      val routes = concat(memoRoute.routes,keywordRoute.routes,memoKeywWordRoute.routes)
+      val bindingFuture = Http().newServerAt("localhost", 8080).bind(routes)
       println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
       StdIn.readLine() // let it run until user presses return
       bindingFuture
