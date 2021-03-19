@@ -12,13 +12,7 @@ readId(t: Memo): number {
 }
 
 constructor(httpClient : HttpClient,mService: OperationMessageService) {
-    super(httpClient,"http://localhost:8080/memo",(err) => {
-      if(err instanceof HttpErrorResponse){
-        const erTyped = err as HttpErrorResponse
-        mService.message.emit(`${erTyped.error}`)
-      }
-
-    })
+    super(httpClient,"http://localhost:8080/memo",mService);
  }
 
 }
