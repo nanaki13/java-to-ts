@@ -26,8 +26,10 @@ object WebServer extends App{
   private val memoKeywWordRoute = RestRoutes[MemoDBImpl.Entities.MemoKeywords]("memo-keyword")
   MemoDBImpl.TablesQuery.create.map{
     _ =>
-      val routes = concat(memoRoute.routes,keywordRoute.routes,memoKeywWordRoute.routes)
-      val bindingFuture = Http().newServerAt("localhost", 8080).bind(routes)
+      val uiRoute = pathPrefix("ui"){getFromDirectory("I:\\work\\htmlApp")}
+      val routes = concat(memoRoute.routes,keywordRoute.routes,memoKeywWordRoute.routes,uiRoute)
+
+      val bindingFuture = Http().newServerAt("0.0.0.0", 8080).bind(routes)
       println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
       StdIn.readLine() // let it run until user presses return
       bindingFuture
